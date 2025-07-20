@@ -1,327 +1,135 @@
-# OmniAgent - A2A + MCP Protocol Agent in Rust
+# OmniAgent - Rust A2A + MCP Agent Framework
 
-A comprehensive Rust implementation of an Agent that supports both the **Agent-to-Agent (A2A)** protocol and **Model Context Protocol (MCP)** for seamless agent communication and tool integration.
+A comprehensive Rust framework for building agents that support both A2A (Agent-to-Agent) and MCP (Model Context Protocol) protocols with multi-provider LLM support.
 
-## 🚀 Features
+## Features
 
-- **A2A Protocol Support**: Full implementation of the Agent-to-Agent protocol
-- **MCP Client**: Connect to multiple MCP servers for tool capabilities
-- **Concurrent Connections**: Async support for multiple MCP and A2A endpoints
-- **State Machine**: Robust message processing with state management
-- **Mock LLM**: Built-in mock LLM for testing and development
-- **RESTful API**: HTTP endpoints for A2A communication
-- **Builder Pattern**: Clean configuration with `AgentBuilder`
-- **Comprehensive Testing**: Unit and integration tests included
+- **A2A Protocol Support**: Full Agent-to-Agent communication via HTTP REST API
+- **MCP Protocol Support**: Model Context Protocol for tool integration
+- **Multi-Provider LLM Support**:
+  - OpenAI (GPT-3.5, GPT-4, etc.)
+  - Anthropic Claude (3.5 Sonnet, 3 Haiku, etc.)
+  - Google Gemini (Pro, Pro Vision, etc.)
+- **Mock Mode**: Development and testing without API keys
+- **Async/Await**: Built on tokio runtime
+- **Comprehensive Testing**: Mock servers for all providers
 
-## 📋 Architecture
-
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   A2A Server    │    │   OmniAgent     │    │   MCP Clients   │
-│   (External)    │◄──►│   (This App)    │◄──►│   (External)    │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-                                │
-                       ┌─────────────────┐
-                       │   Mock LLM      │
-                       │   (Internal)    │
-                       └─────────────────┘
-```
-
-## 🛠️ Quick Start
-
-### Prerequisites
-
-- Rust 1.70+ (for async support)
-- Cargo
+## Quick Start
 
 ### Installation
 
-1. Clone the repository:
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/your-username/omni-agent
 cd omni-agent
-```
-
-2. Build the project:
-```bash
 cargo build --release
 ```
 
-3. Run the A2A server:
-```bash
-cargo run --release
-# or
-PORT=8080 cargo run --release
-```
-
-## 📖 Usage
-
-### Running the A2A Server
-
-```bash
-# Basic usage
-cargo run
-
-# Custom port
-cargo run -- --port 3000
-
-# With debug logging
-RUST_LOG=debug cargo run
-```
-
-### Using the Agent Builder
+### Basic Usage
 
 ```rust
-use omni_agent::AgentBuilder;
+use omni_agent::{
+    llm::providers::{LLMRequest, Message, MessageRole},
+    llm::providers::google::GoogleProvider,
+    llm::providers::LLMProvider,
+};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let agent = AgentBuilder::new("my-agent", "A helpful AI agent")
-        .version("1.0.0")
-        .add_mcp("weather", "http://localhost:8081")
-        .add_a2a("assistant", "http://localhost:8082")
-        .build()
-        .await?;
+    let provider = GoogleProvider::new(
+        "your-google-api-key".to_string(),
+        Some("gemini-pro".to_string())
+    );
 
-    println!("Agent capabilities: {:?}", agent.get_capabilities().await);
+    let request = LLMRequest {
+        messages: vec![
+            Message {
+                role: MessageRole::User,
+                content: "Hello, Gemini!".to_string(),
+            }
+        ],
+        model: "gemini-pro".to_string(),
+        temperature: Some(0.7),
+        max_tokens: Some(100),
+        stream: Some(false),
+    };
+
+    let response = provider.chat(request).await?;
+    println!("Response: {}", response.content);
+
     Ok(())
 }
 ```
 
-### HTTP API Endpoints
-
-Once running, the server provides these endpoints:
-
-- `GET /` - Server info and available endpoints
-- `GET /health` - Health check
-- `GET /manifest` - Agent capabilities and metadata
-- `POST /messages` - Send a message to the agent
-- `GET /messages/:id` - Retrieve a specific message
-
-### Example API Usage
-
-```bash
-# Get agent capabilities
-curl http://localhost:8080/manifest
-
-# Send a message
-curl -X POST http://localhost:8080/messages \
-  -H "Content-Type: application/json" \
-  -d '{
-    "sender": "user",
-    "recipient": "omni-agent",
-    "content": {
-      "type": "Text",
-      "text": "What can you do?"
-    }
-  }'
-```
-
-## 🧪 Testing
-
-### Running Tests
-
-```bash
-# Run all tests
-cargo test
-
-# Run with output
-cargo test -- --nocapture
-
-# Run integration tests only
-cargo test --test integration_test
-
-# Run specific test
-cargo test test_agent_integration
-```
-
-## 🔧 Configuration
-
 ### Environment Variables
 
-- `PORT` - Server port (default: 8080)
-- `RUST_LOG` - Logging level (debug, info, warn, error)
+- `OPENAI_API_KEY`: OpenAI API key
+- `ANTHROPIC_API_KEY`: Claude API key  
+- `GOOGLE_API_KEY`: Google AI API key
+- `PORT`: Server port (default: 8080)
 
-## 🏗️ Development
+## Testing
+
+Run tests with mock servers:
+
+```bash
+# Run Google Gemini tests
+cargo test --test google_integration_test -- --nocapture
+
+# Run Claude tests
+cargo test --test claude_integration_test -- --nocapture
+
+# Run all tests
+cargo test
+```
+
+## Development
 
 ### Project Structure
+
 ```
-omni-agent/
-├── src/
-│   ├── agent/          # Core agent implementation
-│   │   ├── builder.rs  # AgentBuilder pattern
-│   │   └── state.rs    # State machine
-│   ├── mcp/            # MCP protocol client
-│   ├── a2a/            # A2A protocol client
-│   ├── protocol/       # Shared message types
-│   ├── server/         # HTTP server
-│   ├── llm/            # Mock LLM integration
-│   └── main.rs         # Application entry
-├── tests/              # Integration tests
-├── .github/            # GitHub Actions workflows
-├── Dockerfile          # Container configuration
-└── README.md           # This file
+src/
+├── agent/         # Agent implementation
+├── a2a/           # A2A protocol
+├── mcp/           # MCP protocol
+├── llm/           # LLM providers
+├── protocol/      # Shared protocols
+└── server/        # HTTP server
 ```
 
-### Adding New Features
+### LLM Providers
 
-1. **New MCP Tool Support**: Extend `src/mcp/client.rs`
-2. **New A2A Message Type**: Add to `src/protocol/message.rs`
-3. **New State Handling**: Update `src/agent/state.rs`
+#### Google Gemini
+```rust
+use omni_agent::llm::providers::google::GoogleProvider;
 
-## 🚀 Deployment Options
-
-### Docker
-```bash
-# Build and run
-docker build -t omni-agent .
-docker run -p 8080:8080 omni-agent
-
-# With custom port
-docker run -p 3000:8080 -e PORT=8080 omni-agent
+let provider = GoogleProvider::new(
+    "your-google-api-key".to_string(),
+    Some("gemini-pro".to_string())
+);
 ```
 
-### Docker Compose
-```yaml
-version: '3.8'
-services:
-  omni-agent:
-    build: .
-    ports:
-      - "8080:8080"
-    environment:
-      - PORT=8080
-      - RUST_LOG=info
-    restart: unless-stopped
+#### Claude
+```rust
+use omni_agent::llm::providers::claude::ClaudeProvider;
+
+let provider = ClaudeProvider::new(
+    "your-anthropic-api-key".to_string(),
+    Some("claude-3-haiku-20240307".to_string())
+);
 ```
 
-### Kubernetes
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: omni-agent
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: omni-agent
-  template:
-    metadata:
-      labels:
-        app: omni-agent
-    spec:
-      containers:
-      - name: omni-agent
-        image: ghcr.io/your-org/omni-agent:latest
-        ports:
-        - containerPort: 8080
-        env:
-        - name: PORT
-          value: "8080"
-        - name: RUST_LOG
-          value: "info"
+#### OpenAI
+```rust
+use omni_agent::llm::providers::openai::OpenAIProvider;
+
+let provider = OpenAIProvider::new(
+    "your-openai-api-key".to_string(),
+    Some("gpt-3.5-turbo".to_string())
+);
 ```
 
-## 📊 Monitoring & Observability
+## Acknowledgments
 
-### Health Checks
-- `GET /health` - Basic health check
-- `GET /manifest` - Agent capabilities
-
-### Logging
-Configure logging levels:
-```bash
-RUST_LOG=debug cargo run
-RUST_LOG=omni_agent=debug,hyper=info cargo run
-```
-
-### Metrics (Future)
-- Request/response timing
-- Error rates
-- Connection status
-- Queue sizes
-
-## 🔍 Troubleshooting
-
-### Common Issues
-
-1. **Port Already in Use**
-   ```bash
-   # Check what's using the port
-   lsof -i :8080
-   # Use different port
-   PORT=3000 cargo run
-   ```
-
-2. **Build Failures**
-   ```bash
-   # Clean build
-   cargo clean
-   cargo build --release
-   ```
-
-3. **Test Failures**
-   ```bash
-   # Check test output
-   cargo test -- --nocapture
-   # Run specific test
-   cargo test test_agent_integration
-   ```
-
-4. **Docker Issues**
-   ```bash
-   # Debug Docker build
-   docker build --no-cache .
-   # Check running containers
-   docker ps -a
-   ```
-
-### Debug Mode
-Enable detailed logging:
-```bash
-RUST_LOG=debug cargo run
-```
-
-## 🤝 Contributing
-
-1. **Fork the repository**
-2. **Create feature branch**: `git checkout -b feature/amazing-feature`
-3. **Add tests** for new functionality
-4. **Run tests**: `cargo test`
-5. **Format code**: `cargo fmt`
-6. **Lint code**: `cargo clippy`
-7. **Commit changes**: `git commit -m 'feat: add amazing feature'`
-8. **Push to branch**: `git push origin feature/amazing-feature`
-9. **Open Pull Request**
-
-### Development Setup
-```bash
-# Install development tools
-cargo install cargo-audit cargo-watch
-
-# Watch for changes during development
-cargo watch -x check -x test
-```
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🔗 References
-
-- [A2A Protocol Specification](https://github.com/EmilLindfors/a2a-rs)
-- [MCP Protocol Documentation](https://modelcontextprotocol.io/)
-- [Rust Async Book](https://rust-lang.github.io/async-book/)
-- [Axum Framework](https://docs.rs/axum/latest/axum/)
-
-## 📞 Support
-
-For issues and questions:
-1. Check the [Issues](https://github.com/your-repo/issues) page
-2. Review the [Discussions](https://github.com/your-repo/discussions)
-3. Create a new issue with:
-   - Detailed description
-   - Steps to reproduce
-   - Expected vs actual behavior
-   - Environment details
+- Google Gemini Cookbook for API reference
+- Anthropic Claude API documentation
+- OpenAI API documentation
