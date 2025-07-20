@@ -1,0 +1,56 @@
+{
+  "server": {
+    "port": 8080,
+    "host": "0.0.0.0",
+    "cors_origins": ["*"]
+  },
+  "llm": {
+    "provider": "claude",
+    "model": "claude-3-haiku-20240307",
+    "api_key": "YOUR_ANTHROPIC_API_KEY",
+    "base_url": null,
+    "temperature": 0.7,
+    "max_tokens": 1000,
+    "use_mock": false
+  },
+  "mcp": {
+    "enabled": true,
+    "servers": {
+      "weather": {
+        "name": "Weather MCP Server",
+        "description": "Provides weather information",
+        "url": "http://localhost:8081",
+        "timeout": 30,
+        "retry_attempts": 3,
+        "enabled": true
+      },
+      "calculator": {
+        "name": "Calculator MCP Server",
+        "description": "Mathematical calculations",
+        "url": "http://localhost:8082",
+        "timeout": 10,
+        "retry_attempts": 2,
+        "enabled": true
+      }
+    }
+  },
+  "a2a": {
+    "enabled": true,
+    "allow_external": true,
+    "servers": {
+      "assistant": {
+        "name": "External Assistant",
+        "description": "Another A2A agent",
+        "url": "http://localhost:8083",
+        "auth_token": null,
+        "timeout": 30,
+        "enabled": false
+      }
+    }
+  },
+  "logging": {
+    "level": "info",
+    "format": "json",
+    "file": null
+  }
+}

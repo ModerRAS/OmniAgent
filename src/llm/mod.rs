@@ -40,6 +40,46 @@ impl LLMService {
         Self { manager, config }
     }
 
+    pub async fn from_config(config: &crate::config::LLMConfig) -> Result<Self, Box<dyn std::error::Error>> {
+        let provider_config = ProviderConfig {
+            openai: if config.provider == "openai" {
+                Some(crate::llm::providers::OpenAIConfig {
+                    api_key: config.api_key.clone(),
+                    base_url: Some(config.base_url.clone().unwrap_or_else(|| "https://api.openai.com/v1".to_string())),
+                    model: config.model.clone(),
+                })
+            } else {
+                None
+            },
+            claude: if config.provider == "claude" {
+                Some(crate::llm::providers::ClaudeConfig {
+                    api_key: config.api_key.clone(),
+                    model: config.model.clone(),
+                })
+            } else {
+                None
+            },
+            google: if config.provider == "google" {
+                Some(crate::llm::providers::GoogleConfig {
+                    api_key: config.api_key.clone(),
+                    model: config.model.clone(),
+                })
+            } else {
+                None
+            },
+        };
+
+        let llm_config = LLMConfig {
+            provider: config.provider.clone(),
+            model: config.model.clone(),
+            temperature: config.temperature,
+            max_tokens: config.max_tokens,
+            use_mock: config.use_mock,
+        };
+
+        Ok(Self::new(llm_config, provider_config))
+    }
+
     pub async fn process_message(
         &self,
         input: &str,
