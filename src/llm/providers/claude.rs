@@ -6,9 +6,9 @@ use crate::llm::providers::{LLMProvider, LLMRequest, LLMResponse, LLMError, Mess
 
 #[derive(Debug, Clone)]
 pub struct ClaudeProvider {
-    api_key: String,
-    model: String,
-    base_url: String,
+    pub api_key: String,
+    pub model: String,
+    pub base_url: String,
 }
 
 impl ClaudeProvider {

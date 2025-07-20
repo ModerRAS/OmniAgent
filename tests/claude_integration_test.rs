@@ -1,7 +1,6 @@
 use omni_agent::{
-    llm::providers::{LLMRequest, Message, MessageRole},
+    llm::providers::{LLMRequest, Message, MessageRole, LLMProvider},
     llm::providers::claude::ClaudeProvider,
-    llm::LLMConfig,
 };
 use crate::mock_servers::*;
 

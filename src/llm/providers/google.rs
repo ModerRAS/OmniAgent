@@ -5,9 +5,9 @@ use crate::llm::providers::{LLMProvider, LLMRequest, LLMResponse, LLMError, Mess
 
 #[derive(Debug, Clone)]
 pub struct GoogleProvider {
-    api_key: String,
-    model: String,
-    base_url: String,
+    pub api_key: String,
+    pub model: String,
+    pub base_url: String,
 }
 
 impl GoogleProvider {
@@ -27,7 +27,7 @@ impl GoogleProvider {
         }
     }
 
-    fn convert_messages(&self, messages: Vec<crate::llm::providers::Message>) -> (Option<String>, Vec<GeminiMessage>) {
+    pub fn convert_messages(&self, messages: Vec<crate::llm::providers::Message>) -> (Option<String>, Vec<GeminiMessage>) {
         let mut system_message = None;
         let mut gemini_messages = Vec::new();
 
@@ -70,15 +70,15 @@ struct GeminiRequestBody {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-struct GeminiMessage {
-    role: String,
-    parts: Vec<GeminiPart>,
+pub struct GeminiMessage {
+    pub role: String,
+    pub parts: Vec<GeminiPart>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-struct GeminiPart {
-    text: Option<String>,
-    inline_data: Option<serde_json::Value>,
+pub struct GeminiPart {
+    pub text: Option<String>,
+    pub inline_data: Option<serde_json::Value>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

@@ -1,13 +1,6 @@
-mod agent;
-mod mcp;
-mod a2a;
-mod protocol;
-mod server;
-
+use omni_agent::server::A2AServer;
 use tracing::{info, Level};
 use tracing_subscriber::FmtSubscriber;
-
-use crate::server::A2AServer;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
