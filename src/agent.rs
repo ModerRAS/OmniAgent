@@ -7,7 +7,8 @@ use crate::a2a::client::A2AClient;
 use crate::mcp::client::MCPClient;
 use crate::protocol::manifest::Manifest;
 use crate::agent::state::StateMachine;
-use crate::llm::MockLLM;
+use crate::llm::{LLMService, LLMConfig};
+use crate::llm::providers::ProviderConfig;
 
 pub mod builder;
 pub use builder::AgentBuilder;
@@ -20,7 +21,6 @@ pub struct AgentConfig {
     pub version: String,
 }
 
-#[derive(Debug)]
 pub struct Agent {
     pub id: Uuid,
     pub config: AgentConfig,
@@ -28,7 +28,7 @@ pub struct Agent {
     pub a2a_clients: HashMap<String, A2AClient>,
     pub manifests: Arc<RwLock<HashMap<String, Manifest>>>,
     pub state_machine: Arc<RwLock<StateMachine>>,
-    pub llm: Arc<RwLock<MockLLM>>,
+    pub llm: Arc<RwLock<LLMService>>,
 }
 
 impl Agent {
@@ -40,7 +40,14 @@ impl Agent {
             a2a_clients: HashMap::new(),
             manifests: Arc::new(RwLock::new(HashMap::new())),
             state_machine: Arc::new(RwLock::new(StateMachine::new(100))),
-            llm: Arc::new(RwLock::new(MockLLM::new(Default::default()))),
+            llm: Arc::new(RwLock::new(LLMService::new(
+                LLMConfig::default(),
+                ProviderConfig {
+                    openai: None,
+                    claude: None,
+                    google: None,
+                }
+            ))),
         }
     }
 

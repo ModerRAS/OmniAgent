@@ -2,31 +2,27 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Message {
+pub struct A2AMessage {
     pub id: Uuid,
     pub sender: String,
     pub recipient: String,
-    pub content: MessageContent,
+    pub content: A2AMessageContent,
     pub timestamp: chrono::DateTime<chrono::Utc>,
     pub metadata: Option<serde_json::Value>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "type")]
-pub enum MessageContent {
+pub enum A2AMessageContent {
     Text {
         text: String,
     },
-    ToolCall {
-        tool: String,
-        parameters: serde_json::Value,
-    },
-    ToolResult {
-        tool: String,
-        result: serde_json::Value,
-    },
-    AgentRequest {
+    Request {
         request_type: String,
+        payload: serde_json::Value,
+    },
+    Response {
+        response_type: String,
         payload: serde_json::Value,
     },
     Error {
@@ -35,11 +31,11 @@ pub enum MessageContent {
     },
 }
 
-impl Message {
+impl A2AMessage {
     pub fn new(
         sender: String,
         recipient: String,
-        content: MessageContent,
+        content: A2AMessageContent,
         metadata: Option<serde_json::Value>,
     ) -> Self {
         Self {

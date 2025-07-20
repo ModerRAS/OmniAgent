@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use serde::Serialize;
+use crate::protocol::manifest::MCPManifest;
 use thiserror::Error;
 use uuid::Uuid;
 
@@ -13,22 +13,6 @@ pub enum MCPError {
     Protocol(String),
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct MCPManifest {
-    pub name: String,
-    pub version: String,
-    pub description: String,
-    pub capabilities: Vec<String>,
-    pub tools: Vec<MCPTool>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct MCPTool {
-    pub name: String,
-    pub description: String,
-    pub input_schema: serde_json::Value,
-    pub output_schema: serde_json::Value,
-}
 
 #[derive(Debug, Clone)]
 pub struct MCPClient {
@@ -45,7 +29,7 @@ impl MCPClient {
     }
 
     pub async fn fetch_manifest(&self
-    ) -> Result<MCPManifest, MCPError> {
+    ) -> Result<crate::protocol::manifest::MCPManifest, MCPError> {
         let url = format!("{}/manifest", self.base_url);
         let response = self.client.get(&url).send().await?;
         

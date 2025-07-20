@@ -115,13 +115,11 @@ async fn handle_message(
             MessageContent::ToolResult {
                 tool: tool.clone(),
                 result: json!({"mock": true, "tool": tool, "parameters": parameters}),
-                success: true,
             }
         }
         MessageContent::AgentRequest { request_type, payload } => {
-            MessageContent::AgentResponse {
-                response_type: request_type.clone(),
-                payload: json!({"mock": true, "original": payload}),
+            MessageContent::Text {
+                text: format!("Received {} request with payload: {}", request_type, payload),
             }
         }
         _ => {

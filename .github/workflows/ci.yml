@@ -106,3 +106,41 @@ jobs:
         sleep 5
         curl -f http://localhost:8080/health || exit 1
         docker stop test-agent
+
+    - name: Login to GitHub Container Registry
+      if: github.ref == 'refs/heads/main'
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Push to GitHub Container Registry
+      if: github.ref == 'refs/heads/main'
+      run: |
+        docker tag omni-agent:latest ghcr.io/${{ github.repository }}:latest
+        docker push ghcr.io/${{ github.repository }}:latest
+
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    needs: [test, build, security]
+    if: github.ref == 'refs/heads/main'
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Build release binary
+      run: cargo build --release
+
+    - name: Create release archive
+      run: |
+        tar -czf omni-agent-linux-x86_64.tar.gz -C target/release omni-agent
+
+    - name: Upload release assets
+      uses: actions/upload-artifact@v3
+      with:
+        name: omni-agent-linux-x86_64
+        path: omni-agent-linux-x86_64.tar.gz

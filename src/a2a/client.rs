@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use crate::protocol::manifest::A2AManifest;
 use std::collections::HashMap;
 use thiserror::Error;
 use uuid::Uuid;
@@ -13,15 +14,6 @@ pub enum A2AError {
     Protocol(String),
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct A2AManifest {
-    pub name: String,
-    pub version: String,
-    pub description: String,
-    pub capabilities: Vec<String>,
-    pub supported_protocols: Vec<String>,
-    pub endpoints: Vec<String>,
-}
 
 #[derive(Debug, Clone)]
 pub struct A2AClient {
@@ -37,7 +29,7 @@ impl A2AClient {
         }
     }
 
-    pub async fn fetch_manifest(&self) -> Result<A2AManifest, A2AError> {
+    pub async fn fetch_manifest(&self) -> Result<crate::protocol::manifest::A2AManifest, A2AError> {
         let url = format!("{}/manifest", self.base_url);
         let response = self.client.get(&url).send().await?;
         

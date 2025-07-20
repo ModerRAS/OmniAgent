@@ -37,7 +37,7 @@ impl AgentBuilder {
         self
     }
 
-    pub async fn build(mut self) -> Result<Agent, String> {
+    pub async fn build(self) -> Result<Agent, String> {
         let mut agent = Agent::new(self.config);
 
         // Add MCP clients
