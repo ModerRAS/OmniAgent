@@ -241,9 +241,10 @@ mod tests {
 
         let api_key = std::env::var("ANTHROPIC_API_KEY")
             .expect("ANTHROPIC_API_KEY must be set for integration test");
-        
-        let mut provider = ClaudeProvider::new(api_key, Some("claude-3-haiku-20240307".to_string()));
-        
+
+        let mut provider =
+            ClaudeProvider::new(api_key, Some("claude-3-haiku-20240307".to_string()));
+
         // Use a mock endpoint to avoid real API calls during testing
         provider.base_url = "https://httpbin.org/status/401".to_string();
 
@@ -259,7 +260,7 @@ mod tests {
         };
 
         let result = provider.chat(request).await;
-        
+
         // Expect failure due to mock endpoint
         assert!(result.is_err());
         println!("Test passed - API correctly handled authentication error");

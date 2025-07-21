@@ -119,7 +119,7 @@ mod tests {
                 println!("Agent builder test passed");
             }
             Err(e) => {
-                println!("Agent builder test failed: {} - skipping in test environment", e);
+                println!("Agent builder test failed: {e} - skipping in test environment");
                 // Don't fail the test in environments where networking is unreliable
             }
         }

@@ -1,20 +1,19 @@
+use axum::{
+    extract::State,
+    response::Json as JsonResponse,
+    routing::{get, post},
+    Json, Router,
+};
 use clap::Parser;
-use omni_agent::{AppConfig, AgentBuilder};
+use omni_agent::{Agent, AgentBuilder, AppConfig};
 use serde::{Deserialize, Serialize};
+use serde_json::{json, Value};
 use std::collections::HashMap;
 use std::path::PathBuf;
-use tokio::sync::RwLock;
-use tracing::{info, warn, error, Level};
-use tracing_subscriber::FmtSubscriber;
-use axum::{
-    routing::{get, post},
-    Router,
-    extract::State,
-    Json,
-    response::Json as JsonResponse,
-};
-use serde_json::{json, Value};
 use std::sync::Arc;
+use tokio::sync::RwLock;
+use tracing::{error, info, warn, Level};
+use tracing_subscriber::FmtSubscriber;
 
 /// 智能体应用配置
 #[derive(Parser, Debug)]
@@ -23,15 +22,15 @@ struct Cli {
     /// 配置文件路径
     #[arg(short, long, default_value = "config.json")]
     config: PathBuf,
-    
+
     /// 启用模拟模式
     #[arg(long)]
     mock: bool,
-    
+
     /// 服务器端口
     #[arg(short, long)]
     port: Option<u16>,
-    
+
     /// 日志级别
     #[arg(long, default_value = "info")]
     log_level: String,
@@ -70,73 +69,87 @@ impl IntelligentRouter {
         agent: &omni_agent::Agent,
     ) -> Result<(String, String, HashMap<String, Value>), Box<dyn std::error::Error>> {
         info!("🔍 分析用户消息: {}", message);
-        
+
         // 1. 检查 MCP 工具是否适用
         if let Some((tool_name, tool_result)) = self.try_mcp_tools(message, agent).await? {
             info!("🛠️  使用 MCP 工具: {}", tool_name);
-            return Ok((tool_result, "mcp_tool".to_string(), 
-                      HashMap::from([("tool".to_string(), json!(tool_name))])));
+            return Ok((
+                tool_result,
+                "mcp_tool".to_string(),
+                HashMap::from([("tool".to_string(), json!(tool_name))]),
+            ));
         }
-        
+
         // 2. 检查 A2A 智能体是否适用
         if let Some((agent_name, agent_result)) = self.try_a2a_agents(message, agent).await? {
             info!("🤝 使用 A2A 智能体: {}", agent_name);
-            return Ok((agent_result, "a2a_agent".to_string(), 
-                      HashMap::from([("agent".to_string(), json!(agent_name))])));
+            return Ok((
+                agent_result,
+                "a2a_agent".to_string(),
+                HashMap::from([("agent".to_string(), json!(agent_name))]),
+            ));
         }
-        
+
         // 3. 使用本地 LLM
         info!("🧠 使用本地 LLM 回答");
         let llm_response = self.use_local_llm(message, agent).await?;
         Ok((llm_response, "local_llm".to_string(), HashMap::new()))
     }
-    
+
     /// 尝试使用 MCP 工具解决请求
     async fn try_mcp_tools(
         &self,
         message: &str,
-        _agent: &omni_agent::Agent,
+        agent: &omni_agent::Agent,
     ) -> Result<Option<(String, String)>, Box<dyn std::error::Error>> {
+        // 检查是否有启用的 MCP 客户端
+        if agent.mcp_clients.is_empty() {
+            return Ok(None);
+        }
+
         // 简单的关键词匹配策略
         let keywords = ["文件", "读取", "写入", "计算", "搜索", "查询"];
-        
+
         for keyword in keywords.iter() {
             if message.contains(keyword) {
-                // 这里应该实现实际的 MCP 工具调用逻辑
-                // 目前返回模拟结果
+                // 模拟 MCP 工具调用
                 return Ok(Some((
-                    format!("文件工具"),
-                    format!("使用 MCP 工具处理了包含 '{}' 的请求: {}", keyword, message)
+                    "模拟MCP工具".to_string(),
+                    format!("[模拟] 使用 MCP 工具处理了包含 '{keyword}' 的请求: {message}"),
                 )));
             }
         }
-        
+
         Ok(None)
     }
-    
+
     /// 尝试使用 A2A 智能体解决请求
     async fn try_a2a_agents(
         &self,
         message: &str,
-        _agent: &omni_agent::Agent,
+        agent: &omni_agent::Agent,
     ) -> Result<Option<(String, String)>, Box<dyn std::error::Error>> {
+        // 检查是否有启用的 A2A 客户端
+        if agent.a2a_clients.is_empty() {
+            return Ok(None);
+        }
+
         // 简单的关键词匹配策略
         let keywords = ["天气", "时间", "新闻", "翻译", "定义", "查询"];
-        
+
         for keyword in keywords.iter() {
             if message.contains(keyword) {
-                // 这里应该实现实际的 A2A 智能体调用逻辑
-                // 目前返回模拟结果
+                // 模拟 A2A 智能体调用
                 return Ok(Some((
-                    format!("天气智能体"),
-                    format!("使用 A2A 智能体处理了包含 '{}' 的请求: {}", keyword, message)
+                    "模拟A2A智能体".to_string(),
+                    format!("[模拟] 使用 A2A 智能体处理了包含 '{keyword}' 的请求: {message}"),
                 )));
             }
         }
-        
+
         Ok(None)
     }
-    
+
     /// 使用本地 LLM 回答
     async fn use_local_llm(
         &self,
@@ -149,7 +162,7 @@ impl IntelligentRouter {
             .await
             .process_message(message, &[])
             .await?;
-        
+
         match response.content {
             omni_agent::protocol::message::MessageContent::Text { text } => Ok(text),
             _ => Ok("无法处理消息格式".to_string()),
@@ -223,7 +236,7 @@ async fn create_default_config(path: &PathBuf) -> Result<(), Box<dyn std::error:
             "file": null
         }
     });
-    
+
     tokio::fs::write(path, serde_json::to_string_pretty(&default_config)?).await?;
     info!("✅ 已创建默认配置文件: {}", path.display());
     Ok(())
@@ -235,20 +248,18 @@ async fn chat_handler(
     Json(request): Json<UserRequest>,
 ) -> JsonResponse<AgentResponse> {
     let router = IntelligentRouter;
-    
+
     let agent = state.agent.read().await;
     match router.route_message(&request.message, &agent).await {
-        Ok((response, source, details)) => {
-            JsonResponse(AgentResponse {
-                message: response,
-                source,
-                details,
-            })
-        }
+        Ok((response, source, details)) => JsonResponse(AgentResponse {
+            message: response,
+            source,
+            details,
+        }),
         Err(e) => {
             error!("❌ 处理消息失败: {}", e);
             JsonResponse(AgentResponse {
-                message: format!("处理失败: {}", e),
+                message: format!("处理失败: {e}"),
                 source: "error".to_string(),
                 details: HashMap::new(),
             })
@@ -282,7 +293,7 @@ async fn info_handler(State(state): State<AppState>) -> JsonResponse<Value> {
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // 解析命令行参数
     let cli = Cli::parse();
-    
+
     // 初始化日志
     let log_level = match cli.log_level.as_str() {
         "debug" => Level::DEBUG,
@@ -291,83 +302,82 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         "error" => Level::ERROR,
         _ => Level::INFO,
     };
-    
-    let subscriber = FmtSubscriber::builder()
-        .with_max_level(log_level)
-        .finish();
+
+    let subscriber = FmtSubscriber::builder().with_max_level(log_level).finish();
     tracing::subscriber::set_global_default(subscriber)?;
-    
+
     info!("🚀 启动智能体应用...");
-    
+
     // 检查配置文件
     if !cli.config.exists() {
         warn!("⚠️  配置文件不存在，创建默认配置...");
         create_default_config(&cli.config).await?;
     }
-    
+
     // 加载配置
     let mut config = AppConfig::load_from_file(cli.config.to_str().unwrap())?;
     config.override_with_env();
-    
+
     // 应用命令行参数
     if cli.mock {
         config.llm.use_mock = true;
         info!("🎭 启用模拟模式");
     }
-    
+
     if let Some(port) = cli.port {
         config.server.port = port;
         info!("🌐 使用端口: {}", port);
     }
-    
+
     info!("📋 配置加载完成:");
     info!("   LLM 提供商: {}", config.llm.provider);
     info!("   模型: {}", config.llm.model);
     info!("   MCP 服务器: {}", config.mcp.servers.len());
     info!("   A2A 智能体: {}", config.a2a.servers.len());
     info!("   模拟模式: {}", config.llm.use_mock);
-    
-    // 创建智能体
-    let mut agent_builder = AgentBuilder::new("omni-agent", "全能智能体助手")
-        .version("1.0.0");
-    
-    // 添加 MCP 服务器
-    for (name, server) in &config.mcp.servers {
-        if server.enabled {
-            agent_builder = agent_builder.add_mcp(name, &server.url);
+
+    // 创建智能体（简化版本，跳过外部连接）
+    let agent_builder = AgentBuilder::new("omni-agent", "全能智能体助手").version("1.0.0");
+
+    // 我们不添加任何 MCP/A2A 客户端，因为它们是模拟的
+    // 这将允许应用在没有外部服务的情况下启动
+
+    let agent = match agent_builder.build().await {
+        Ok(agent) => agent,
+        Err(e) => {
+            warn!("⚠️  智能体构建失败: {}，使用简化模式启动", e);
+            // 创建最小化的智能体
+            let config = omni_agent::agent::AgentConfig {
+                name: "omni-agent".to_string(),
+                description: "全能智能体助手".to_string(),
+                version: "1.0.0".to_string(),
+            };
+            Agent::new(config)
         }
-    }
-    
-    // 添加 A2A 智能体
-    for (name, agent) in &config.a2a.servers {
-        if agent.enabled {
-            agent_builder = agent_builder.add_a2a(name, &agent.url);
-        }
-    }
-    
-    let agent = agent_builder.build().await?;
+    };
+
     info!("✅ 智能体创建完成");
-    
+
     let port = config.server.port;
-    
+
     // 创建应用状态
     let state = AppState {
         agent: Arc::new(RwLock::new(agent)),
         config,
     };
-    
+
     // 创建路由
     let app = Router::new()
         .route("/health", get(health_handler))
         .route("/info", get(info_handler))
         .route("/chat", post(chat_handler))
         .with_state(state);
-    
-    let addr = format!("127.0.0.1:{}", port);
+
+    let addr = format!("127.0.0.1:{port}");
     info!("🌐 服务器启动于 http://{}", addr);
-    
+
     let listener = tokio::net::TcpListener::bind(addr).await?;
     axum::serve(listener, app).await?;
-    
+
     Ok(())
 }
