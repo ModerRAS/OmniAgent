@@ -1,6 +1,4 @@
 use omni_agent::{
-    llm::providers::{OpenAIConfig, ProviderConfig},
-    llm::LLMConfig,
     AgentBuilder,
 };
 
@@ -8,7 +6,7 @@ use omni_agent::{
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Example 1: Using mock LLM
     println!("=== Example 1: Mock LLM ===");
-    let mut agent = AgentBuilder::new("test-agent", "Test agent with LLM")
+    let agent = AgentBuilder::new("test-agent", "Test agent with LLM")
         .build()
         .await?;
 
@@ -59,7 +57,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Example 3: List available providers
     println!("=== Example 3: Available Providers ===");
     let providers = agent.llm.write().await.list_providers().await;
-    println!("Available LLM providers: {:?}", providers);
+    println!("Available LLM providers: {providers:?}");
 
     Ok(())
 }

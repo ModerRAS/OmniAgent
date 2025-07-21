@@ -10,7 +10,7 @@ mod mock_servers;
 #[tokio::test]
 async fn test_agent_with_claude_llm() {
     // 启动mock服务器
-    let mock_claude_url = start_mock_claude_server(8083).await;
+    let _mock_claude_url = start_mock_claude_server(8083).await;
 
     // 配置Claude provider
     let provider_config = ProviderConfig {
@@ -31,7 +31,7 @@ async fn test_agent_with_claude_llm() {
     };
 
     // 创建agent
-    let mut agent = AgentBuilder::new("test-agent", "Test agent")
+    let agent = AgentBuilder::new("test-agent", "Test agent")
         .build()
         .await
         .unwrap();
@@ -97,7 +97,7 @@ async fn test_agent_capabilities() {
 
     // 测试初始状态
     let providers = agent.llm.write().await.list_providers().await;
-    println!("Initial providers: {:?}", providers);
+    println!("Initial providers: {providers:?}");
 
     // 测试mock响应
     let response = agent

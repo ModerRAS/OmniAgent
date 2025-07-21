@@ -103,7 +103,7 @@ impl Agent {
             let manifest = client
                 .fetch_manifest()
                 .await
-                .map_err(|e| format!("Failed to fetch MCP manifest for {}: {}", name, e))?;
+                .map_err(|e| format!("Failed to fetch MCP manifest for {name}: {e}"))?;
             self.manifests
                 .write()
                 .await
@@ -115,7 +115,7 @@ impl Agent {
             let manifest = client
                 .fetch_manifest()
                 .await
-                .map_err(|e| format!("Failed to fetch A2A manifest for {}: {}", name, e))?;
+                .map_err(|e| format!("Failed to fetch A2A manifest for {name}: {e}"))?;
             self.manifests
                 .write()
                 .await

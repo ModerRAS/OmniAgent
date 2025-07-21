@@ -105,7 +105,7 @@ async fn handle_message(
 
     let response_content = match &message.content {
         MessageContent::Text { text } => MessageContent::Text {
-            text: format!("Received: {}", text),
+            text: format!("Received: {text}"),
         },
         MessageContent::ToolCall { tool, parameters } => MessageContent::ToolResult {
             tool: tool.clone(),
@@ -116,8 +116,7 @@ async fn handle_message(
             payload,
         } => MessageContent::Text {
             text: format!(
-                "Received {} request with payload: {}",
-                request_type, payload
+                "Received {request_type} request with payload: {payload}"
             ),
         },
         _ => MessageContent::Error {
@@ -141,7 +140,7 @@ async fn get_message(Path(id): Path<Uuid>) -> Result<Json<Message>, Response> {
         "server".to_string(),
         "client".to_string(),
         MessageContent::Text {
-            text: format!("Message {} not found", id),
+            text: format!("Message {id} not found"),
         },
         None,
     );

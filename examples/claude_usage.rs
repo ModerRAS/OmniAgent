@@ -10,7 +10,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Example 1: Using mock Claude
     println!("=== Example 1: Mock Claude ===");
-    let mut agent = AgentBuilder::new("claude-test-agent", "Test agent with Claude")
+    let agent = AgentBuilder::new("claude-test-agent", "Test agent with Claude")
         .build()
         .await?;
 
@@ -44,7 +44,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             use_mock: false,
         };
 
-        let mut agent = AgentBuilder::new("real-claude-agent", "Agent with Claude API")
+        let agent = AgentBuilder::new("real-claude-agent", "Agent with Claude API")
             .build()
             .await?;
 
@@ -81,7 +81,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Example 3: List available providers
     println!("=== Example 3: Available Providers ===");
     let providers = agent.llm.write().await.list_providers().await;
-    println!("Available LLM providers: {:?}", providers);
+    println!("Available LLM providers: {providers:?}");
 
     Ok(())
 }

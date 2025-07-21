@@ -88,11 +88,15 @@ struct ClaudeRequestBody {
 
 #[derive(Debug, Deserialize)]
 struct ClaudeResponseBody {
+    #[allow(dead_code)]
     id: String,
     content: Vec<ClaudeResponseContent>,
     model: String,
+    #[allow(dead_code)]
     role: String,
+    #[allow(dead_code)]
     stop_reason: Option<String>,
+    #[allow(dead_code)]
     stop_sequence: Option<String>,
     usage: ClaudeUsage,
 }
@@ -100,6 +104,7 @@ struct ClaudeResponseBody {
 #[derive(Debug, Deserialize)]
 struct ClaudeResponseContent {
     #[serde(rename = "type")]
+    #[allow(dead_code)]
     type_: String,
     text: String,
 }
@@ -142,19 +147,18 @@ impl LLMProvider for ClaudeProvider {
         if !response.status().is_success() {
             let error_text = response.text().await.unwrap_or_default();
             return Err(LLMError::ApiError(format!(
-                "Claude API error: {}",
-                error_text
+                "Claude API error: {error_text}"
             )));
         }
 
         let response_body: ClaudeResponseBody = response
             .json()
             .await
-            .map_err(|e| LLMError::ApiError(format!("Parse error: {}", e)))?;
+            .map_err(|e| LLMError::ApiError(format!("Parse error: {e}")))?;
 
         let content = response_body
             .content
-            .get(0)
+            .first()
             .map(|c| c.text.clone())
             .unwrap_or_default();
 
@@ -258,7 +262,7 @@ mod tests {
                 println!("Claude response: {}", response.content);
             }
             Err(e) => {
-                panic!("Claude API test failed: {}", e);
+                panic!("Claude API test failed: {e}");
             }
         }
     }

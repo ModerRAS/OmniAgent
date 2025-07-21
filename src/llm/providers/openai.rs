@@ -66,7 +66,7 @@ impl LLMProvider for OpenAIProvider {
             .base_url
             .as_deref()
             .unwrap_or("https://api.openai.com/v1");
-        let request_url = format!("{}/chat/completions", url);
+        let request_url = format!("{url}/chat/completions");
 
         let response = self
             .client

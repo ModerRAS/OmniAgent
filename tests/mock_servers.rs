@@ -52,11 +52,13 @@ struct MockUsage {
     output_tokens: u32,
 }
 
+#[allow(dead_code)]
 #[derive(Clone)]
 struct MockClaudeState {
     responses: Arc<RwLock<HashMap<String, String>>>,
 }
 
+#[allow(dead_code)]
 async fn mock_claude_handler(
     State(state): State<MockClaudeState>,
     Json(request): Json<MockClaudeRequest>,
@@ -129,11 +131,13 @@ struct MockOpenAIUsage {
     total_tokens: u32,
 }
 
+#[allow(dead_code)]
 #[derive(Clone)]
 struct MockOpenAIState {
     responses: Arc<RwLock<HashMap<String, String>>>,
 }
 
+#[allow(dead_code)]
 async fn mock_openai_handler(
     State(state): State<MockOpenAIState>,
     Json(request): Json<MockOpenAIRequest>,
@@ -168,6 +172,7 @@ async fn mock_openai_handler(
     })
 }
 
+#[allow(dead_code)]
 pub async fn start_mock_claude_server(port: u16) -> String {
     let state = MockClaudeState {
         responses: Arc::new(RwLock::new(HashMap::new())),
@@ -183,9 +188,9 @@ pub async fn start_mock_claude_server(port: u16) -> String {
         .route("/v1/messages", post(mock_claude_handler))
         .with_state(state);
 
-    let url = format!("http://localhost:{}", port);
+    let url = format!("http://localhost:{port}");
     tokio::spawn(async move {
-        let listener = TcpListener::bind(format!("0.0.0.0:{}", port))
+        let listener = TcpListener::bind(format!("0.0.0.0:{port}"))
             .await
             .unwrap();
         serve(listener, app).await.unwrap();
@@ -194,6 +199,7 @@ pub async fn start_mock_claude_server(port: u16) -> String {
     url
 }
 
+#[allow(dead_code)]
 pub async fn start_mock_google_server(port: u16) -> String {
     let state = MockOpenAIState {
         responses: Arc::new(RwLock::new(HashMap::new())),
@@ -212,9 +218,9 @@ pub async fn start_mock_google_server(port: u16) -> String {
         )
         .with_state(state);
 
-    let url = format!("http://localhost:{}", port);
+    let url = format!("http://localhost:{port}");
     tokio::spawn(async move {
-        let listener = TcpListener::bind(format!("0.0.0.0:{}", port))
+        let listener = TcpListener::bind(format!("0.0.0.0:{port}"))
             .await
             .unwrap();
         serve(listener, app).await.unwrap();
@@ -223,6 +229,7 @@ pub async fn start_mock_google_server(port: u16) -> String {
     url
 }
 
+#[allow(dead_code)]
 async fn mock_google_handler(
     State(state): State<MockOpenAIState>,
     Json(request): Json<serde_json::Value>,
@@ -257,6 +264,7 @@ async fn mock_google_handler(
     }))
 }
 
+#[allow(dead_code)]
 pub async fn start_mock_openai_server(port: u16) -> String {
     let state = MockOpenAIState {
         responses: Arc::new(RwLock::new(HashMap::new())),
@@ -272,9 +280,9 @@ pub async fn start_mock_openai_server(port: u16) -> String {
         .route("/v1/chat/completions", post(mock_openai_handler))
         .with_state(state);
 
-    let url = format!("http://localhost:{}", port);
+    let url = format!("http://localhost:{port}");
     tokio::spawn(async move {
-        let listener = TcpListener::bind(format!("0.0.0.0:{}", port))
+        let listener = TcpListener::bind(format!("0.0.0.0:{port}"))
             .await
             .unwrap();
         serve(listener, app).await.unwrap();

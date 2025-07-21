@@ -119,7 +119,7 @@ impl AppConfig {
         } else {
             let config = AppConfig::default();
             config.save_to_file(&config_path)?;
-            println!("Created default config file: {}", config_path);
+            println!("Created default config file: {config_path}");
             Ok(config)
         }
     }

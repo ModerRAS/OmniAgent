@@ -21,6 +21,7 @@ impl GoogleProvider {
         }
     }
 
+    #[allow(dead_code)]
     fn convert_message_role(role: OurMessageRole) -> String {
         match role {
             OurMessageRole::System => "system".to_string(),
@@ -115,20 +116,26 @@ struct GeminiResponse {
 #[derive(Debug, Deserialize)]
 struct GeminiCandidate {
     content: Option<GeminiContent>,
+    #[allow(dead_code)]
     finish_reason: Option<String>,
+    #[allow(dead_code)]
     index: Option<i32>,
+    #[allow(dead_code)]
     safety_ratings: Option<Vec<GeminiSafetyRating>>,
 }
 
 #[derive(Debug, Deserialize)]
 struct GeminiContent {
     parts: Vec<GeminiPart>,
+    #[allow(dead_code)]
     role: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
 struct GeminiSafetyRating {
+    #[allow(dead_code)]
     category: String,
+    #[allow(dead_code)]
     probability: String,
 }
 
@@ -182,25 +189,24 @@ impl LLMProvider for GoogleProvider {
         if !response.status().is_success() {
             let error_text = response.text().await.unwrap_or_default();
             return Err(LLMError::ApiError(format!(
-                "Google AI API error: {}",
-                error_text
+                "Google AI API error: {error_text}"
             )));
         }
 
         let response_data: GeminiResponse = response
             .json()
             .await
-            .map_err(|e| LLMError::ApiError(format!("Parse error: {}", e)))?;
+            .map_err(|e| LLMError::ApiError(format!("Parse error: {e}")))?;
 
         let candidate = response_data
             .candidates
-            .get(0)
+            .first()
             .ok_or_else(|| LLMError::ApiError("No response from Google AI".to_string()))?;
 
         let content = candidate
             .content
             .as_ref()
-            .and_then(|content| content.parts.get(0))
+            .and_then(|content| content.parts.first())
             .and_then(|part| part.text.clone())
             .unwrap_or_default();
 

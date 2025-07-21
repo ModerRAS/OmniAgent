@@ -132,7 +132,7 @@ impl LLMService {
                     "usage": response.usage
                 })),
             )),
-            Err(e) => Err(format!("LLM error: {}", e)),
+            Err(e) => Err(format!("LLM error: {e}")),
         }
     }
 
@@ -142,7 +142,7 @@ impl LLMService {
             "openai" => format!("[OpenAI {}] Processing: {}", self.config.model, input),
             "claude" => format!("[Claude {}] Analyzing: {}", self.config.model, input),
             "google" => format!("[Google {}] Responding: {}", self.config.model, input),
-            _ => format!("[Mock] Received: {}", input),
+            _ => format!("[Mock] Received: {input}"),
         };
 
         let content = if input.contains("tool") {

@@ -10,13 +10,13 @@ mod mock_servers;
 #[tokio::test]
 async fn test_google_provider_with_mock_server() {
     // 启动模拟Google服务器
-    let mock_google_url = start_mock_google_server(8084).await;
+    let _mock_google_url = start_mock_google_server(8084).await;
 
     // 创建Google provider并指向模拟服务器
-    let mut provider = GoogleProvider::new("mock-key".to_string(), Some("gemini-pro".to_string()));
+    let provider = GoogleProvider::new("mock-key".to_string(), Some("gemini-pro".to_string()));
     // 注意：GoogleProvider的base_url是私有的，我们需要通过ProviderConfig设置
 
-    let request = LLMRequest {
+    let _request = LLMRequest {
         messages: vec![Message {
             role: MessageRole::User,
             content: "Hello".to_string(),

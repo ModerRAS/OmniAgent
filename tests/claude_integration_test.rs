@@ -77,13 +77,11 @@ async fn test_claude_provider_with_system_message() {
 #[tokio::test]
 async fn test_claude_provider_error_handling() {
     // 使用无效的URL测试错误处理
-    let provider = ClaudeProvider::new(
+    let _provider = ClaudeProvider::new(
         "invalid-key".to_string(),
         Some("claude-3-haiku-20240307".to_string()),
     );
-    // 使用无效的base_url
-
-    let request = LLMRequest {
+    let _request = LLMRequest {
         messages: vec![Message {
             role: MessageRole::User,
             content: "Test".to_string(),
@@ -93,8 +91,4 @@ async fn test_claude_provider_error_handling() {
         max_tokens: Some(50),
         stream: Some(false),
     };
-
-    // 这应该返回错误，但我们的mock会处理
-    // 在真实测试中，这会测试网络错误处理
-    assert!(true); // 简化测试
 }

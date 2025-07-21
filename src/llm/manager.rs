@@ -90,7 +90,7 @@ impl LLMManager {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::llm::providers::{ClaudeConfig, GoogleConfig, OpenAIConfig};
+    use crate::llm::providers::OpenAIConfig;
 
     #[tokio::test]
     async fn test_llm_manager_creation() {
