@@ -2,6 +2,13 @@ FROM rust:1.88-slim AS builder
 
 WORKDIR /app
 
+# 安装构建依赖
+RUN apt-get update && apt-get install -y \
+    pkg-config \
+    libssl-dev \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
 # 复制所有文件
 COPY . .
 
