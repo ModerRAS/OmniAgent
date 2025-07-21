@@ -1,15 +1,10 @@
+use axum::serve;
+use axum::{extract::State, routing::post, Json, Router};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
-use tokio::sync::RwLock;
-use axum::{
-    routing::post,
-    Router,
-    Json,
-    extract::State,
-};
-use axum::serve;
 use tokio::net::TcpListener;
-use serde::{Deserialize, Serialize};
+use tokio::sync::RwLock;
 
 // Mock Claude Server
 #[derive(Debug, Serialize, Deserialize)]
@@ -66,8 +61,16 @@ async fn mock_claude_handler(
     State(state): State<MockClaudeState>,
     Json(request): Json<MockClaudeRequest>,
 ) -> Json<MockClaudeResponse> {
-    let response_text = state.responses.read().await
-        .get(&request.messages.last().unwrap().content[0].text.clone().unwrap_or_default())
+    let response_text = state
+        .responses
+        .read()
+        .await
+        .get(
+            &request.messages.last().unwrap().content[0]
+                .text
+                .clone()
+                .unwrap_or_default(),
+        )
         .cloned()
         .unwrap_or_else(|| "This is a mock Claude response".to_string());
 
@@ -136,7 +139,10 @@ async fn mock_openai_handler(
     Json(request): Json<MockOpenAIRequest>,
 ) -> Json<MockOpenAIResponse> {
     let last_message = request.messages.last().unwrap();
-    let response_text = state.responses.read().await
+    let response_text = state
+        .responses
+        .read()
+        .await
         .get(&last_message.content)
         .cloned()
         .unwrap_or_else(|| "This is a mock OpenAI response".to_string());
@@ -166,7 +172,7 @@ pub async fn start_mock_claude_server(port: u16) -> String {
     let state = MockClaudeState {
         responses: Arc::new(RwLock::new(HashMap::new())),
     };
-    
+
     // 添加一些测试响应
     state.responses.write().await.insert(
         "Hello".to_string(),
@@ -179,7 +185,9 @@ pub async fn start_mock_claude_server(port: u16) -> String {
 
     let url = format!("http://localhost:{}", port);
     tokio::spawn(async move {
-        let listener = TcpListener::bind(format!("0.0.0.0:{}", port)).await.unwrap();
+        let listener = TcpListener::bind(format!("0.0.0.0:{}", port))
+            .await
+            .unwrap();
         serve(listener, app).await.unwrap();
     });
 
@@ -190,7 +198,7 @@ pub async fn start_mock_google_server(port: u16) -> String {
     let state = MockOpenAIState {
         responses: Arc::new(RwLock::new(HashMap::new())),
     };
-    
+
     // 添加一些测试响应
     state.responses.write().await.insert(
         "Hello".to_string(),
@@ -198,12 +206,17 @@ pub async fn start_mock_google_server(port: u16) -> String {
     );
 
     let app = Router::new()
-        .route("/v1beta/models/gemini-pro:generateContent", post(mock_google_handler))
+        .route(
+            "/v1beta/models/gemini-pro:generateContent",
+            post(mock_google_handler),
+        )
         .with_state(state);
 
     let url = format!("http://localhost:{}", port);
     tokio::spawn(async move {
-        let listener = TcpListener::bind(format!("0.0.0.0:{}", port)).await.unwrap();
+        let listener = TcpListener::bind(format!("0.0.0.0:{}", port))
+            .await
+            .unwrap();
         serve(listener, app).await.unwrap();
     });
 
@@ -218,7 +231,10 @@ async fn mock_google_handler(
         .as_str()
         .unwrap_or("Hello");
 
-    let response_text = state.responses.read().await
+    let response_text = state
+        .responses
+        .read()
+        .await
         .get(request_text)
         .cloned()
         .unwrap_or_else(|| "This is a mock Google Gemini response".to_string());
@@ -245,7 +261,7 @@ pub async fn start_mock_openai_server(port: u16) -> String {
     let state = MockOpenAIState {
         responses: Arc::new(RwLock::new(HashMap::new())),
     };
-    
+
     // 添加一些测试响应
     state.responses.write().await.insert(
         "Hello".to_string(),
@@ -258,7 +274,9 @@ pub async fn start_mock_openai_server(port: u16) -> String {
 
     let url = format!("http://localhost:{}", port);
     tokio::spawn(async move {
-        let listener = TcpListener::bind(format!("0.0.0.0:{}", port)).await.unwrap();
+        let listener = TcpListener::bind(format!("0.0.0.0:{}", port))
+            .await
+            .unwrap();
         serve(listener, app).await.unwrap();
     });
 

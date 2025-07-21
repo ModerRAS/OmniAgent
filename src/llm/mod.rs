@@ -1,12 +1,12 @@
-pub mod providers;
 pub mod manager;
+pub mod providers;
 
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
-use crate::protocol::message::{Message, MessageContent};
 use crate::llm::manager::LLMManager;
-use crate::llm::providers::{ProviderConfig, LLMRequest};
+use crate::llm::providers::{LLMRequest, ProviderConfig};
+use crate::protocol::message::{Message, MessageContent};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct LLMConfig {
@@ -30,8 +30,8 @@ impl Default for LLMConfig {
 }
 
 pub struct LLMService {
-    manager: LLMManager,
-    config: LLMConfig,
+    pub manager: LLMManager,
+    pub config: LLMConfig,
 }
 
 impl LLMService {
@@ -40,12 +40,19 @@ impl LLMService {
         Self { manager, config }
     }
 
-    pub async fn from_config(config: &crate::config::LLMConfig) -> Result<Self, Box<dyn std::error::Error>> {
+    pub async fn from_config(
+        config: &crate::config::LLMConfig,
+    ) -> Result<Self, Box<dyn std::error::Error>> {
         let provider_config = ProviderConfig {
             openai: if config.provider == "openai" {
                 Some(crate::llm::providers::OpenAIConfig {
                     api_key: config.api_key.clone(),
-                    base_url: Some(config.base_url.clone().unwrap_or_else(|| "https://api.openai.com/v1".to_string())),
+                    base_url: Some(
+                        config
+                            .base_url
+                            .clone()
+                            .unwrap_or_else(|| "https://api.openai.com/v1".to_string()),
+                    ),
                     model: config.model.clone(),
                 })
             } else {
@@ -92,20 +99,17 @@ impl LLMService {
         }
     }
 
-    async fn real_process(
-        &self,
-        input: &str,
-        _context: &[Message],
-    ) -> Result<Message, String> {
-        let provider = self.manager.get_provider(&self.config.provider).await
+    async fn real_process(&self, input: &str, _context: &[Message]) -> Result<Message, String> {
+        let provider = self
+            .manager
+            .get_provider(&self.config.provider)
+            .await
             .ok_or_else(|| format!("Provider {} not found", self.config.provider))?;
 
-        let messages = vec![
-            crate::llm::providers::Message {
-                role: crate::llm::providers::MessageRole::User,
-                content: input.to_string(),
-            }
-        ];
+        let messages = vec![crate::llm::providers::Message {
+            role: crate::llm::providers::MessageRole::User,
+            content: input.to_string(),
+        }];
 
         let request = LLMRequest {
             messages,
@@ -116,29 +120,23 @@ impl LLMService {
         };
 
         match provider.chat(request).await {
-            Ok(response) => {
-                Ok(Message::new(
-                    "llm".to_string(),
-                    "user".to_string(),
-                    MessageContent::Text {
-                        text: response.content,
-                    },
-                    Some(json!({
-                        "provider": self.config.provider,
-                        "model": response.model,
-                        "usage": response.usage
-                    })),
-                ))
-            }
+            Ok(response) => Ok(Message::new(
+                "llm".to_string(),
+                "user".to_string(),
+                MessageContent::Text {
+                    text: response.content,
+                },
+                Some(json!({
+                    "provider": self.config.provider,
+                    "model": response.model,
+                    "usage": response.usage
+                })),
+            )),
             Err(e) => Err(format!("LLM error: {}", e)),
         }
     }
 
-    async fn mock_process(
-        &self,
-        input: &str,
-        _context: &[Message],
-    ) -> Result<Message, String> {
+    async fn mock_process(&self, input: &str, _context: &[Message]) -> Result<Message, String> {
         // Enhanced mock processing with provider awareness
         let response_text = match self.config.provider.as_str() {
             "openai" => format!("[OpenAI {}] Processing: {}", self.config.model, input),

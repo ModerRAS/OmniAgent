@@ -1,7 +1,7 @@
 use omni_agent::{
-    AgentBuilder,
+    llm::providers::{OpenAIConfig, ProviderConfig},
     llm::LLMConfig,
-    llm::providers::{ProviderConfig, OpenAIConfig},
+    AgentBuilder,
 };
 
 #[tokio::main]
@@ -12,16 +12,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .build()
         .await?;
 
-    let response = agent.llm.write().await.process_message(
-        "What is the weather like?",
-        &[]
-    ).await?;
+    let response = agent
+        .llm
+        .write()
+        .await
+        .process_message("What is the weather like?", &[])
+        .await?;
 
     println!("Mock Response: {:?}", response.content);
 
     // Example 2: Using OpenAI API (requires API key)
     println!("=== Example 2: OpenAI LLM ===");
-    
+
     // Uncomment and set your API key to use real OpenAI
     // let provider_config = ProviderConfig {
     //     openai: Some(OpenAIConfig {
@@ -32,7 +34,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     //     claude: None,
     //     google: None,
     // };
-    
+
     // let llm_config = LLMConfig {
     //     provider: "openai".to_string(),
     //     model: "gpt-3.5-turbo".to_string(),
@@ -40,14 +42,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     //     max_tokens: 150,
     //     use_mock: false,
     // };
-    
+
     // let agent = AgentBuilder::new("openai-agent", "Agent with OpenAI")
     //     .build()
     //     .await?;
-    
+
     // agent.llm.write().await.config = llm_config;
     // agent.llm.write().await.manager = LLMManager::new(provider_config, "openai");
-    
+
     // let response = agent.llm.write().await.process_message(
     //     "What is the capital of France?",
     //     &[]

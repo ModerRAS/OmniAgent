@@ -1,9 +1,8 @@
 use axum::{
-    routing::get,
-    Router,
-    Json,
-    extract::{State, Path},
+    extract::{Path, State},
     response::Response,
+    routing::get,
+    Json, Router,
 };
 use serde_json::json;
 use std::sync::Arc;
@@ -27,7 +26,7 @@ impl AppState {
 }
 
 pub struct A2AServer {
-    port: u16,
+    pub port: u16,
     state: AppState,
 }
 
@@ -38,10 +37,10 @@ impl A2AServer {
             description: "A2A + MCP Agent Server".to_string(),
             version: "0.1.0".to_string(),
         };
-        
+
         let agent = Agent::new(agent_config);
         let state = AppState::new(agent);
-        
+
         Self { port, state }
     }
 
@@ -54,11 +53,10 @@ impl A2AServer {
             .route("/messages/:id", get(get_message))
             .with_state(self.state);
 
-        let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", self.port))
-            .await?;
-        
+        let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", self.port)).await?;
+
         println!("🔥 A2A Server running on http://localhost:{}", self.port);
-        
+
         axum::serve(listener, app).await?;
         Ok(())
     }
@@ -88,7 +86,7 @@ async fn health() -> Json<serde_json::Value> {
 async fn get_manifest(State(state): State<AppState>) -> Json<serde_json::Value> {
     let agent = state.agent.read().await;
     let capabilities = agent.get_capabilities().await;
-    
+
     Json(json!({
         "name": agent.config.name,
         "version": agent.config.version,
@@ -104,30 +102,28 @@ async fn handle_message(
     Json(message): Json<Message>,
 ) -> Result<Json<Message>, Response> {
     let agent = state.agent.read().await;
-    
+
     let response_content = match &message.content {
-        MessageContent::Text { text } => {
-            MessageContent::Text {
-                text: format!("Received: {}", text),
-            }
-        }
-        MessageContent::ToolCall { tool, parameters } => {
-            MessageContent::ToolResult {
-                tool: tool.clone(),
-                result: json!({"mock": true, "tool": tool, "parameters": parameters}),
-            }
-        }
-        MessageContent::AgentRequest { request_type, payload } => {
-            MessageContent::Text {
-                text: format!("Received {} request with payload: {}", request_type, payload),
-            }
-        }
-        _ => {
-            MessageContent::Error {
-                code: "UNSUPPORTED".to_string(),
-                message: "Unsupported message type".to_string(),
-            }
-        }
+        MessageContent::Text { text } => MessageContent::Text {
+            text: format!("Received: {}", text),
+        },
+        MessageContent::ToolCall { tool, parameters } => MessageContent::ToolResult {
+            tool: tool.clone(),
+            result: json!({"mock": true, "tool": tool, "parameters": parameters}),
+        },
+        MessageContent::AgentRequest {
+            request_type,
+            payload,
+        } => MessageContent::Text {
+            text: format!(
+                "Received {} request with payload: {}",
+                request_type, payload
+            ),
+        },
+        _ => MessageContent::Error {
+            code: "UNSUPPORTED".to_string(),
+            message: "Unsupported message type".to_string(),
+        },
     };
 
     let response = Message::new(
@@ -140,9 +136,7 @@ async fn handle_message(
     Ok(Json(response))
 }
 
-async fn get_message(
-    Path(id): Path<Uuid>,
-) -> Result<Json<Message>, Response> {
+async fn get_message(Path(id): Path<Uuid>) -> Result<Json<Message>, Response> {
     let message = Message::new(
         "server".to_string(),
         "client".to_string(),
@@ -151,6 +145,6 @@ async fn get_message(
         },
         None,
     );
-    
+
     Ok(Json(message))
 }

@@ -1,5 +1,5 @@
-use crate::agent::{Agent, AgentConfig};
 use crate::a2a::client::A2AClient;
+use crate::agent::{Agent, AgentConfig};
 use crate::mcp::client::MCPClient;
 use std::collections::HashMap;
 
@@ -62,8 +62,8 @@ impl AgentBuilder {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use wiremock::{MockServer, Mock, ResponseTemplate};
     use wiremock::matchers::{method, path};
+    use wiremock::{Mock, MockServer, ResponseTemplate};
 
     #[tokio::test]
     async fn test_agent_builder() {

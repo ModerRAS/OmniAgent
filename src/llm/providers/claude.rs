@@ -1,8 +1,10 @@
 use async_trait::async_trait;
-use serde::{Deserialize, Serialize};
 use reqwest;
+use serde::{Deserialize, Serialize};
 
-use crate::llm::providers::{LLMProvider, LLMRequest, LLMResponse, LLMError, MessageRole as OurMessageRole, Usage};
+use crate::llm::providers::{
+    LLMError, LLMProvider, LLMRequest, LLMResponse, MessageRole as OurMessageRole, Usage,
+};
 
 #[derive(Debug, Clone)]
 pub struct ClaudeProvider {
@@ -28,7 +30,10 @@ impl ClaudeProvider {
         }
     }
 
-    fn convert_messages(&self, messages: Vec<crate::llm::providers::Message>) -> (Option<String>, Vec<ClaudeMessage>) {
+    fn convert_messages(
+        &self,
+        messages: Vec<crate::llm::providers::Message>,
+    ) -> (Option<String>, Vec<ClaudeMessage>) {
         let mut system_message = None;
         let mut claude_messages = Vec::new();
 
@@ -107,13 +112,11 @@ struct ClaudeUsage {
 
 #[async_trait]
 impl LLMProvider for ClaudeProvider {
-    async fn chat(&self,
-        request: LLMRequest,
-    ) -> Result<LLMResponse, LLMError> {
+    async fn chat(&self, request: LLMRequest) -> Result<LLMResponse, LLMError> {
         let client = reqwest::Client::new();
-        
+
         let (system_message, claude_messages) = self.convert_messages(request.messages);
-        
+
         let request_body = ClaudeRequestBody {
             model: self.model.clone(),
             max_tokens: request.max_tokens.unwrap_or(1024),
@@ -138,7 +141,10 @@ impl LLMProvider for ClaudeProvider {
 
         if !response.status().is_success() {
             let error_text = response.text().await.unwrap_or_default();
-            return Err(LLMError::ApiError(format!("Claude API error: {}", error_text)));
+            return Err(LLMError::ApiError(format!(
+                "Claude API error: {}",
+                error_text
+            )));
         }
 
         let response_body: ClaudeResponseBody = response
@@ -146,7 +152,8 @@ impl LLMProvider for ClaudeProvider {
             .await
             .map_err(|e| LLMError::ApiError(format!("Parse error: {}", e)))?;
 
-        let content = response_body.content
+        let content = response_body
+            .content
             .get(0)
             .map(|c| c.text.clone())
             .unwrap_or_default();
@@ -162,18 +169,16 @@ impl LLMProvider for ClaudeProvider {
         })
     }
 
-    async fn chat_stream(
-        &self,
-        _request: LLMRequest,
-    ) -> Result<String, LLMError> {
-        Err(LLMError::ApiError("Claude streaming not implemented yet".to_string()))
+    async fn chat_stream(&self, _request: LLMRequest) -> Result<String, LLMError> {
+        Err(LLMError::ApiError(
+            "Claude streaming not implemented yet".to_string(),
+        ))
     }
 
-    fn provider_name(&self
-    ) -> &'static str {
+    fn provider_name(&self) -> &'static str {
         "claude"
     }
-    
+
     fn as_any(&self) -> &dyn std::any::Any {
         self
     }
@@ -190,7 +195,7 @@ mod tests {
             "test-key".to_string(),
             Some("claude-3-opus-20240229".to_string()),
         );
-        
+
         assert_eq!(provider.provider_name(), "claude");
         assert_eq!(provider.model, "claude-3-opus-20240229");
         assert_eq!(provider.base_url, "https://api.anthropic.com/v1");
@@ -199,7 +204,7 @@ mod tests {
     #[test]
     fn test_convert_messages() {
         let provider = ClaudeProvider::new("test-key".to_string(), None);
-        
+
         let messages = vec![
             Message {
                 role: MessageRole::System,
@@ -212,11 +217,14 @@ mod tests {
         ];
 
         let (system_msg, claude_msgs) = provider.convert_messages(messages);
-        
+
         assert_eq!(system_msg, Some("You are a helpful assistant".to_string()));
         assert_eq!(claude_msgs.len(), 1);
         assert_eq!(claude_msgs[0].role, "user");
-        assert_eq!(claude_msgs[0].content[0].text, Some("Hello, Claude!".to_string()));
+        assert_eq!(
+            claude_msgs[0].content[0].text,
+            Some("Hello, Claude!".to_string())
+        );
     }
 
     #[tokio::test]
@@ -242,7 +250,7 @@ mod tests {
         };
 
         let result = provider.chat(request).await;
-        
+
         match result {
             Ok(response) => {
                 assert!(!response.content.is_empty());

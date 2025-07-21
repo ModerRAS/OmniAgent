@@ -1,7 +1,9 @@
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 
-use crate::llm::providers::{LLMProvider, LLMRequest, LLMResponse, LLMError, MessageRole as OurMessageRole, Usage};
+use crate::llm::providers::{
+    LLMError, LLMProvider, LLMRequest, LLMResponse, MessageRole as OurMessageRole, Usage,
+};
 
 #[derive(Debug, Clone)]
 pub struct GoogleProvider {
@@ -27,7 +29,10 @@ impl GoogleProvider {
         }
     }
 
-    pub fn convert_messages(&self, messages: Vec<crate::llm::providers::Message>) -> (Option<String>, Vec<GeminiMessage>) {
+    pub fn convert_messages(
+        &self,
+        messages: Vec<crate::llm::providers::Message>,
+    ) -> (Option<String>, Vec<GeminiMessage>) {
         let mut system_message = None;
         let mut gemini_messages = Vec::new();
 
@@ -138,9 +143,9 @@ struct GeminiUsageMetadata {
 impl LLMProvider for GoogleProvider {
     async fn chat(&self, request: LLMRequest) -> Result<LLMResponse, LLMError> {
         let client = reqwest::Client::new();
-        
+
         let (system_message, gemini_messages) = self.convert_messages(request.messages);
-        
+
         let mut request_body = GeminiRequestBody {
             contents: gemini_messages,
             system_instruction: None,
@@ -164,7 +169,7 @@ impl LLMProvider for GoogleProvider {
         }
 
         let url = format!("{}/models/{}:generateContent", self.base_url, self.model);
-        
+
         let response = client
             .post(&url)
             .header("Content-Type", "application/json")
@@ -176,7 +181,10 @@ impl LLMProvider for GoogleProvider {
 
         if !response.status().is_success() {
             let error_text = response.text().await.unwrap_or_default();
-            return Err(LLMError::ApiError(format!("Google AI API error: {}", error_text)));
+            return Err(LLMError::ApiError(format!(
+                "Google AI API error: {}",
+                error_text
+            )));
         }
 
         let response_data: GeminiResponse = response
@@ -184,11 +192,14 @@ impl LLMProvider for GoogleProvider {
             .await
             .map_err(|e| LLMError::ApiError(format!("Parse error: {}", e)))?;
 
-        let candidate = response_data.candidates
+        let candidate = response_data
+            .candidates
             .get(0)
             .ok_or_else(|| LLMError::ApiError("No response from Google AI".to_string()))?;
 
-        let content = candidate.content.as_ref()
+        let content = candidate
+            .content
+            .as_ref()
             .and_then(|content| content.parts.get(0))
             .and_then(|part| part.text.clone())
             .unwrap_or_default();
@@ -201,22 +212,23 @@ impl LLMProvider for GoogleProvider {
 
         Ok(LLMResponse {
             content,
-            model: response_data.model_version.unwrap_or_else(|| self.model.clone()),
+            model: response_data
+                .model_version
+                .unwrap_or_else(|| self.model.clone()),
             usage,
         })
     }
 
-    async fn chat_stream(
-        &self,
-        _request: LLMRequest,
-    ) -> Result<String, LLMError> {
-        Err(LLMError::ApiError("Google AI streaming not implemented yet".to_string()))
+    async fn chat_stream(&self, _request: LLMRequest) -> Result<String, LLMError> {
+        Err(LLMError::ApiError(
+            "Google AI streaming not implemented yet".to_string(),
+        ))
     }
 
     fn provider_name(&self) -> &'static str {
         "google"
     }
-    
+
     fn as_any(&self) -> &dyn std::any::Any {
         self
     }
@@ -232,16 +244,19 @@ mod tests {
             "test-key".to_string(),
             Some("gemini-pro-vision".to_string()),
         );
-        
+
         assert_eq!(provider.provider_name(), "google");
         assert_eq!(provider.model, "gemini-pro-vision");
-        assert_eq!(provider.base_url, "https://generativelanguage.googleapis.com/v1beta");
+        assert_eq!(
+            provider.base_url,
+            "https://generativelanguage.googleapis.com/v1beta"
+        );
     }
 
     #[test]
     fn test_message_conversion() {
         let provider = GoogleProvider::new("test-key".to_string(), None);
-        
+
         let messages = vec![
             crate::llm::providers::Message {
                 role: OurMessageRole::System,
@@ -254,10 +269,13 @@ mod tests {
         ];
 
         let (system_msg, gemini_msgs) = provider.convert_messages(messages);
-        
+
         assert_eq!(system_msg, Some("You are a helpful assistant".to_string()));
         assert_eq!(gemini_msgs.len(), 1);
         assert_eq!(gemini_msgs[0].role, "user");
-        assert_eq!(gemini_msgs[0].parts[0].text, Some("Hello, Gemini!".to_string()));
+        assert_eq!(
+            gemini_msgs[0].parts[0].text,
+            Some("Hello, Gemini!".to_string())
+        );
     }
 }

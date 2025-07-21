@@ -1,5 +1,5 @@
-use serde::Serialize;
 use crate::protocol::manifest::MCPManifest;
+use serde::Serialize;
 use thiserror::Error;
 use uuid::Uuid;
 
@@ -12,7 +12,6 @@ pub enum MCPError {
     #[error("Protocol error: {0}")]
     Protocol(String),
 }
-
 
 #[derive(Debug, Clone)]
 pub struct MCPClient {
@@ -28,15 +27,15 @@ impl MCPClient {
         }
     }
 
-    pub async fn fetch_manifest(&self
-    ) -> Result<crate::protocol::manifest::MCPManifest, MCPError> {
+    pub async fn fetch_manifest(&self) -> Result<crate::protocol::manifest::MCPManifest, MCPError> {
         let url = format!("{}/manifest", self.base_url);
         let response = self.client.get(&url).send().await?;
-        
+
         if !response.status().is_success() {
-            return Err(MCPError::Protocol(
-                format!("Failed to fetch manifest: {}", response.status())
-            ));
+            return Err(MCPError::Protocol(format!(
+                "Failed to fetch manifest: {}",
+                response.status()
+            )));
         }
 
         let manifest: MCPManifest = response.json().await?;
@@ -49,7 +48,7 @@ impl MCPClient {
         parameters: serde_json::Value,
     ) -> Result<serde_json::Value, MCPError> {
         let url = format!("{}/tools/{}/call", self.base_url, tool_name);
-        
+
         #[derive(Serialize)]
         struct ToolCallRequest {
             parameters: serde_json::Value,
@@ -61,16 +60,13 @@ impl MCPClient {
             id: Uuid::new_v4(),
         };
 
-        let response = self.client
-            .post(&url)
-            .json(&request)
-            .send()
-            .await?;
+        let response = self.client.post(&url).json(&request).send().await?;
 
         if !response.status().is_success() {
-            return Err(MCPError::Protocol(
-                format!("Tool call failed: {}", response.status())
-            ));
+            return Err(MCPError::Protocol(format!(
+                "Tool call failed: {}",
+                response.status()
+            )));
         }
 
         let result: serde_json::Value = response.json().await?;

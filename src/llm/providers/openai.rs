@@ -1,9 +1,13 @@
 use async_trait::async_trait;
-use reqwest::Client;
-use openai_api_rs::v1::chat_completion::{ChatCompletionRequest, ChatCompletionMessage, MessageRole, Content};
+use openai_api_rs::v1::chat_completion::{
+    ChatCompletionMessage, ChatCompletionRequest, Content, MessageRole,
+};
 use openai_api_rs::v1::common::GPT3_5_TURBO;
+use reqwest::Client;
 
-use crate::llm::providers::{LLMProvider, LLMRequest, LLMResponse, LLMError, MessageRole as OurMessageRole, Usage};
+use crate::llm::providers::{
+    LLMError, LLMProvider, LLMRequest, LLMResponse, MessageRole as OurMessageRole, Usage,
+};
 
 #[derive(Debug)]
 pub struct OpenAIProvider {
@@ -33,7 +37,9 @@ impl OpenAIProvider {
         }
     }
 
-    fn convert_messages(messages: Vec<crate::llm::providers::Message>) -> Vec<ChatCompletionMessage> {
+    fn convert_messages(
+        messages: Vec<crate::llm::providers::Message>,
+    ) -> Vec<ChatCompletionMessage> {
         messages
             .into_iter()
             .map(|msg| ChatCompletionMessage {
@@ -49,22 +55,21 @@ impl OpenAIProvider {
 
 #[async_trait]
 impl LLMProvider for OpenAIProvider {
-    async fn chat(&self,
-        request: LLMRequest,
-    ) -> Result<LLMResponse, LLMError> {
+    async fn chat(&self, request: LLMRequest) -> Result<LLMResponse, LLMError> {
         let messages = Self::convert_messages(request.messages);
-        
-        let req = ChatCompletionRequest::new(
-            self.model.clone(),
-            messages,
-        )
-        .temperature(request.temperature.unwrap_or(0.7) as f64)
-        .max_tokens(request.max_tokens.unwrap_or(1000) as i64);
 
-        let url = self.base_url.as_deref().unwrap_or("https://api.openai.com/v1");
+        let req = ChatCompletionRequest::new(self.model.clone(), messages)
+            .temperature(request.temperature.unwrap_or(0.7) as f64)
+            .max_tokens(request.max_tokens.unwrap_or(1000) as i64);
+
+        let url = self
+            .base_url
+            .as_deref()
+            .unwrap_or("https://api.openai.com/v1");
         let request_url = format!("{}/chat/completions", url);
 
-        let response = self.client
+        let response = self
+            .client
             .post(&request_url)
             .bearer_auth(&self.api_key)
             .json(&req)
@@ -81,7 +86,8 @@ impl LLMProvider for OpenAIProvider {
             .as_array()
             .ok_or_else(|| LLMError::ApiError("No choices in response".to_string()))?;
 
-        let choice = choices.first()
+        let choice = choices
+            .first()
             .ok_or_else(|| LLMError::ApiError("No response from OpenAI".to_string()))?;
 
         let content = choice["message"]["content"]
@@ -107,18 +113,16 @@ impl LLMProvider for OpenAIProvider {
         })
     }
 
-    async fn chat_stream(
-        &self,
-        _request: LLMRequest,
-    ) -> Result<String, LLMError> {
-        Err(LLMError::ApiError("OpenAI streaming not implemented yet".to_string()))
+    async fn chat_stream(&self, _request: LLMRequest) -> Result<String, LLMError> {
+        Err(LLMError::ApiError(
+            "OpenAI streaming not implemented yet".to_string(),
+        ))
     }
 
-    fn provider_name(&self
-    ) -> &'static str {
+    fn provider_name(&self) -> &'static str {
         "openai"
     }
-    
+
     fn as_any(&self) -> &dyn std::any::Any {
         self
     }
@@ -135,7 +139,7 @@ mod tests {
             Some("gpt-3.5-turbo".to_string()),
             None,
         );
-        
+
         assert_eq!(provider.provider_name(), "openai");
         assert_eq!(provider.model, "gpt-3.5-turbo");
     }

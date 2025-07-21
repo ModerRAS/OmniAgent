@@ -111,9 +111,9 @@ impl AppConfig {
     }
 
     pub fn load_from_env() -> Result<Self, Box<dyn std::error::Error>> {
-        let config_path = std::env::var("OMNI_AGENT_CONFIG")
-            .unwrap_or_else(|_| "config.json".to_string());
-        
+        let config_path =
+            std::env::var("OMNI_AGENT_CONFIG").unwrap_or_else(|_| "config.json".to_string());
+
         if std::path::Path::new(&config_path).exists() {
             Self::load_from_file(&config_path)
         } else {

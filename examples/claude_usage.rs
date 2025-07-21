@@ -1,7 +1,7 @@
 use omni_agent::{
-    AgentBuilder,
+    llm::providers::{ClaudeConfig, ProviderConfig},
     llm::LLMConfig,
-    llm::providers::{ProviderConfig, ClaudeConfig},
+    AgentBuilder,
 };
 
 #[tokio::main]
@@ -14,16 +14,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .build()
         .await?;
 
-    let response = agent.llm.write().await.process_message(
-        "What is the weather like?",
-        &[]
-    ).await?;
+    let response = agent
+        .llm
+        .write()
+        .await
+        .process_message("What is the weather like?", &[])
+        .await?;
 
     println!("Mock Claude Response: {:?}", response.content);
 
     // Example 2: Using real Claude API (requires API key)
     println!("=== Example 2: Real Claude LLM ===");
-    
+
     if let Ok(api_key) = std::env::var("ANTHROPIC_API_KEY") {
         let provider_config = ProviderConfig {
             openai: None,
@@ -50,19 +52,27 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         {
             let mut llm_service = agent.llm.write().await;
             llm_service.config = llm_config.clone();
-            llm_service.manager = omni_agent::llm::manager::LLMManager::new(
-                provider_config.clone(),
-                "claude"
-            );
+            llm_service.manager =
+                omni_agent::llm::manager::LLMManager::new(provider_config.clone(), "claude");
         }
 
-        let response = agent.llm.write().await.process_message(
-            "Explain quantum computing in one sentence.",
-            &[]
-        ).await?;
+        let response = agent
+            .llm
+            .write()
+            .await
+            .process_message("Explain quantum computing in one sentence.", &[])
+            .await?;
 
-        println!("Real Claude Response: {}", response.content);
-        println!("Model used: {}", response.metadata.as_ref().and_then(|m| m.get("model")).and_then(|v| v.as_str()).unwrap_or("unknown"));
+        println!("Real Claude Response: {:?}", response.content);
+        println!(
+            "Model used: {}",
+            response
+                .metadata
+                .as_ref()
+                .and_then(|m| m.get("model"))
+                .and_then(|v| v.as_str())
+                .unwrap_or("unknown")
+        );
     } else {
         println!("Skipping real Claude test - ANTHROPIC_API_KEY not set");
         println!("Set ANTHROPIC_API_KEY environment variable to test real Claude API");

@@ -1,5 +1,5 @@
-use tracing::{info};
 use serde_json::json;
+use tracing::info;
 
 use crate::config::AppConfig;
 use crate::llm::LLMService;
@@ -25,13 +25,19 @@ impl OmniApp {
         let _llm_service = LLMService::from_config(&self.config.llm).await?;
 
         info!("🎯 OmniAgent is ready!");
-        info!("📍 A2A Server: http://{}:{}", self.config.server.host, self.config.server.port);
-        info!("📊 MCP Servers configured: {}", self.config.mcp.servers.len());
+        info!(
+            "📍 A2A Server: http://{}:{}",
+            self.config.server.host, self.config.server.port
+        );
+        info!(
+            "📊 MCP Servers configured: {}",
+            self.config.mcp.servers.len()
+        );
         info!("🤝 A2A Peers configured: {}", self.config.a2a.servers.len());
 
         let server = A2AServer::new(self.config.server.port);
         server.run().await?;
-        
+
         Ok(())
     }
 

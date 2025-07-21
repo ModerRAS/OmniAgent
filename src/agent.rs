@@ -4,12 +4,12 @@ use tokio::sync::RwLock;
 use uuid::Uuid;
 
 use crate::a2a::client::A2AClient;
+use crate::agent::state::StateMachine;
+use crate::llm::providers::ProviderConfig;
+use crate::llm::LLMConfig;
+use crate::llm::LLMService;
 use crate::mcp::client::MCPClient;
 use crate::protocol::manifest::Manifest;
-use crate::agent::state::StateMachine;
-use crate::llm::LLMService;
-use crate::llm::LLMConfig;
-use crate::llm::providers::ProviderConfig;
 
 pub mod builder;
 pub use builder::AgentBuilder;
@@ -47,7 +47,7 @@ impl Agent {
                     openai: None,
                     claude: None,
                     google: None,
-                }
+                },
             ))),
         }
     }
@@ -63,7 +63,7 @@ impl Agent {
         // Use LLM to process the message
         let llm = self.llm.read().await;
         let context = state_machine.get_context();
-        
+
         let response = match message.content {
             crate::protocol::message::MessageContent::Text { ref text } => {
                 llm.process_message(text, &context).await?
@@ -100,16 +100,26 @@ impl Agent {
     pub async fn fetch_manifests(&self) -> Result<(), String> {
         // Fetch MCP manifests
         for (name, client) in &self.mcp_clients {
-            let manifest = client.fetch_manifest().await
+            let manifest = client
+                .fetch_manifest()
+                .await
                 .map_err(|e| format!("Failed to fetch MCP manifest for {}: {}", name, e))?;
-            self.manifests.write().await.insert(name.clone(), Manifest::MCP(manifest));
+            self.manifests
+                .write()
+                .await
+                .insert(name.clone(), Manifest::MCP(manifest));
         }
 
         // Fetch A2A manifests
         for (name, client) in &self.a2a_clients {
-            let manifest = client.fetch_manifest().await
+            let manifest = client
+                .fetch_manifest()
+                .await
                 .map_err(|e| format!("Failed to fetch A2A manifest for {}: {}", name, e))?;
-            self.manifests.write().await.insert(name.clone(), Manifest::A2A(manifest));
+            self.manifests
+                .write()
+                .await
+                .insert(name.clone(), Manifest::A2A(manifest));
         }
 
         Ok(())
@@ -117,7 +127,8 @@ impl Agent {
 
     pub async fn get_capabilities(&self) -> Vec<String> {
         let manifests = self.manifests.read().await;
-        manifests.values()
+        manifests
+            .values()
             .flat_map(|manifest| match manifest {
                 Manifest::MCP(m) => m.capabilities.clone(),
                 Manifest::A2A(m) => m.capabilities.clone(),

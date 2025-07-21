@@ -1,7 +1,7 @@
-use omni_agent::{AgentBuilder, A2AServer};
 use omni_agent::protocol::message::{Message, MessageContent};
-use wiremock::{MockServer, Mock, ResponseTemplate};
+use omni_agent::{A2AServer, AgentBuilder};
 use wiremock::matchers::{method, path};
+use wiremock::{Mock, MockServer, ResponseTemplate};
 
 #[tokio::test]
 async fn test_agent_integration() {
@@ -86,7 +86,7 @@ async fn test_agent_integration() {
 #[tokio::test]
 async fn test_a2a_server_health() {
     let server = A2AServer::new(0); // Use port 0 for random available port
-    
+
     // This is a basic test to ensure the server can be created
     // In a real test, we'd spin up the server and make HTTP requests
     assert_eq!(server.port, 0);
@@ -94,10 +94,10 @@ async fn test_a2a_server_health() {
 
 #[tokio::test]
 async fn test_state_machine() {
-    use omni_agent::agent::state::{StateMachine, AgentState};
+    use omni_agent::agent::state::{AgentState, StateMachine};
 
     let mut state_machine = StateMachine::new(5);
-    
+
     assert_eq!(state_machine.get_state(), &AgentState::Idle);
     assert!(state_machine.is_ready());
 
@@ -157,9 +157,9 @@ async fn test_message_flow() {
     );
 
     let response2 = agent.process_message(message2).await.unwrap();
-    if let MessageContent::ToolResult { tool, result, success } = response2.content {
+    if let MessageContent::ToolResult { tool, result } = response2.content {
         assert_eq!(tool, "mock_tool");
-        assert!(success);
+        assert!(result.is_object());
     } else {
         panic!("Expected tool result");
     }

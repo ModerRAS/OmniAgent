@@ -1,6 +1,6 @@
-pub mod openai;
 pub mod claude;
 pub mod google;
+pub mod openai;
 
 pub use openai::OpenAIProvider;
 
@@ -66,7 +66,7 @@ pub trait LLMProvider: Send + Sync {
     async fn chat(&self, request: LLMRequest) -> Result<LLMResponse, LLMError>;
     async fn chat_stream(&self, request: LLMRequest) -> Result<String, LLMError>;
     fn provider_name(&self) -> &'static str;
-    
+
     fn as_any(&self) -> &dyn std::any::Any;
 }
 

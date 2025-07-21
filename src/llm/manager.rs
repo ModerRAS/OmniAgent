@@ -2,9 +2,9 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
-use crate::llm::providers::{LLMProvider, ProviderConfig, OpenAIProvider};
 use crate::llm::providers::claude::ClaudeProvider;
 use crate::llm::providers::google::GoogleProvider;
+use crate::llm::providers::{LLMProvider, OpenAIProvider, ProviderConfig};
 
 #[derive(Clone)]
 pub struct LLMManager {
@@ -47,42 +47,32 @@ impl LLMManager {
         }
     }
 
-    pub async fn add_provider(
-        &self,
-        name: String,
-        provider: Box<dyn LLMProvider + Send + Sync>,
-    ) {
+    pub async fn add_provider(&self, name: String, provider: Box<dyn LLMProvider + Send + Sync>) {
         let mut providers = self.providers.write().await;
         providers.insert(name, provider);
     }
 
-    pub async fn get_provider(
-        &self,
-        name: &str,
-    ) -> Option<Box<dyn LLMProvider + Send + Sync>> {
+    pub async fn get_provider(&self, name: &str) -> Option<Box<dyn LLMProvider + Send + Sync>> {
         let providers = self.providers.read().await;
-        providers.get(name).map(|p| {
-            match p.provider_name() {
-                "openai" => Box::new(OpenAIProvider::new(
-                    "mock-key".to_string(),
-                    Some("gpt-3.5-turbo".to_string()),
-                    None,
-                )) as Box<dyn LLMProvider + Send + Sync>,
-                "claude" => Box::new(ClaudeProvider::new(
-                    "mock-key".to_string(),
-                    Some("claude-3-haiku-20240307".to_string()),
-                )) as Box<dyn LLMProvider + Send + Sync>,
-                "google" => Box::new(GoogleProvider::new(
-                    "mock-key".to_string(),
-                    Some("gemini-pro".to_string()),
-                )) as Box<dyn LLMProvider + Send + Sync>,
-                _ => panic!("Unknown provider"),
-            }
+        providers.get(name).map(|p| match p.provider_name() {
+            "openai" => Box::new(OpenAIProvider::new(
+                "mock-key".to_string(),
+                Some("gpt-3.5-turbo".to_string()),
+                None,
+            )) as Box<dyn LLMProvider + Send + Sync>,
+            "claude" => Box::new(ClaudeProvider::new(
+                "mock-key".to_string(),
+                Some("claude-3-haiku-20240307".to_string()),
+            )) as Box<dyn LLMProvider + Send + Sync>,
+            "google" => Box::new(GoogleProvider::new(
+                "mock-key".to_string(),
+                Some("gemini-pro".to_string()),
+            )) as Box<dyn LLMProvider + Send + Sync>,
+            _ => panic!("Unknown provider"),
         })
     }
 
-    pub fn get_default_provider(&self
-    ) -> &str {
+    pub fn get_default_provider(&self) -> &str {
         &self.default_provider
     }
 
@@ -100,11 +90,12 @@ impl LLMManager {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::llm::providers::{ClaudeConfig, GoogleConfig, OpenAIConfig};
 
     #[tokio::test]
     async fn test_llm_manager_creation() {
         let config = ProviderConfig {
-            openai: Some(super::super::OpenAIConfig {
+            openai: Some(OpenAIConfig {
                 api_key: "test-key".to_string(),
                 base_url: None,
                 model: "gpt-3.5-turbo".to_string(),
@@ -115,7 +106,7 @@ mod tests {
 
         let manager = LLMManager::new(config, "openai");
         let providers = manager.list_providers().await;
-        
+
         assert_eq!(providers.len(), 1);
         assert!(providers.contains(&"openai".to_string()));
         assert_eq!(manager.get_default_provider(), "openai");
@@ -124,7 +115,7 @@ mod tests {
     #[tokio::test]
     async fn test_provider_availability() {
         let config = ProviderConfig {
-            openai: Some(super::super::OpenAIConfig {
+            openai: Some(OpenAIConfig {
                 api_key: "test-key".to_string(),
                 base_url: None,
                 model: "gpt-3.5-turbo".to_string(),
@@ -134,7 +125,7 @@ mod tests {
         };
 
         let manager = LLMManager::new(config, "openai");
-        
+
         assert!(manager.is_provider_available("openai").await);
         assert!(!manager.is_provider_available("claude").await);
     }
