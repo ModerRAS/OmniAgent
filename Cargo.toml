@@ -2,9 +2,9 @@
 name = "omni-agent"
 version = "0.1.0"
 edition = "2021"
-authors = ["Claude <noreply@anthropic.com>"]
+authors = ["ModerRAS", "Claude <noreply@anthropic.com>"]
 description = "A2A + MCP Agent implementation in Rust"
-license = "MIT"
+license = "AGPL-3.0"
 
 [dependencies]
 tokio = { version = "1.0", features = ["full"] }
