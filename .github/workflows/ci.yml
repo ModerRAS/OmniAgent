@@ -23,7 +23,10 @@ jobs:
     - name: Install Rust
       uses: dtolnay/rust-toolchain@stable
       with:
+        components: rustfmt, clippy
+      with:
         toolchain: ${{ matrix.rust }}
+        components: rustfmt, clippy
 
     - name: Cache cargo registry
       uses: actions/cache@v3
@@ -54,6 +57,8 @@ jobs:
 
     - name: Install Rust
       uses: dtolnay/rust-toolchain@stable
+      with:
+        components: rustfmt, clippy
 
     - name: Cache cargo registry
       uses: actions/cache@v3
@@ -80,6 +85,8 @@ jobs:
 
     - name: Install Rust
       uses: dtolnay/rust-toolchain@stable
+      with:
+        components: rustfmt, clippy
 
     - name: Install cargo-audit
       run: cargo install cargo-audit
@@ -147,6 +154,8 @@ jobs:
 
     - name: Install Rust
       uses: dtolnay/rust-toolchain@stable
+      with:
+        components: rustfmt, clippy
 
     - name: Build release binary
       run: cargo build --release
