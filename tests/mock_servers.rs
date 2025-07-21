@@ -190,9 +190,7 @@ pub async fn start_mock_claude_server(port: u16) -> String {
 
     let url = format!("http://localhost:{port}");
     tokio::spawn(async move {
-        let listener = TcpListener::bind(format!("0.0.0.0:{port}"))
-            .await
-            .unwrap();
+        let listener = TcpListener::bind(format!("0.0.0.0:{port}")).await.unwrap();
         serve(listener, app).await.unwrap();
     });
 
@@ -220,9 +218,7 @@ pub async fn start_mock_google_server(port: u16) -> String {
 
     let url = format!("http://localhost:{port}");
     tokio::spawn(async move {
-        let listener = TcpListener::bind(format!("0.0.0.0:{port}"))
-            .await
-            .unwrap();
+        let listener = TcpListener::bind(format!("0.0.0.0:{port}")).await.unwrap();
         serve(listener, app).await.unwrap();
     });
 
@@ -282,9 +278,7 @@ pub async fn start_mock_openai_server(port: u16) -> String {
 
     let url = format!("http://localhost:{port}");
     tokio::spawn(async move {
-        let listener = TcpListener::bind(format!("0.0.0.0:{port}"))
-            .await
-            .unwrap();
+        let listener = TcpListener::bind(format!("0.0.0.0:{port}")).await.unwrap();
         serve(listener, app).await.unwrap();
     });
 

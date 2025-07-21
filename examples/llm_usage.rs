@@ -1,6 +1,4 @@
-use omni_agent::{
-    AgentBuilder,
-};
+use omni_agent::AgentBuilder;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {

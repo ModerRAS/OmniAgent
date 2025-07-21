@@ -115,9 +115,7 @@ async fn handle_message(
             request_type,
             payload,
         } => MessageContent::Text {
-            text: format!(
-                "Received {request_type} request with payload: {payload}"
-            ),
+            text: format!("Received {request_type} request with payload: {payload}"),
         },
         _ => MessageContent::Error {
             code: "UNSUPPORTED".to_string(),
