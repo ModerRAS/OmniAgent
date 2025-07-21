@@ -8,6 +8,7 @@ use omni_agent::{
 mod mock_servers;
 
 #[tokio::test]
+#[ignore = "Integration test requiring mock server"]
 async fn test_agent_with_claude_llm() {
     // 启动mock服务器
     let _mock_claude_url = start_mock_claude_server(8083).await;

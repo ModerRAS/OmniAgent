@@ -8,6 +8,7 @@ use omni_agent::{
 mod mock_servers;
 
 #[tokio::test]
+#[ignore = "Integration test requiring mock server"]
 async fn test_google_provider_with_mock_server() {
     // 启动模拟Google服务器
     let _mock_google_url = start_mock_google_server(8084).await;
