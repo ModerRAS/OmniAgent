@@ -88,10 +88,12 @@ pub struct OpenAIConfig {
 pub struct ClaudeConfig {
     pub api_key: String,
     pub model: String,
+    pub base_url: Option<String>,
 }
 
 #[derive(Debug, Clone)]
 pub struct GoogleConfig {
     pub api_key: String,
     pub model: String,
+    pub base_url: Option<String>,
 }

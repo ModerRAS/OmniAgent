@@ -32,6 +32,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             claude: Some(ClaudeConfig {
                 api_key: api_key.clone(),
                 model: "claude-3-haiku-20240307".to_string(),
+                base_url: None,
             }),
             google: None,
         };

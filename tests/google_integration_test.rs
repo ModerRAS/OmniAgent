@@ -14,7 +14,7 @@ async fn test_google_provider_with_mock_server() {
     let _mock_google_url = start_mock_google_server(8084).await;
 
     // 创建Google provider并指向模拟服务器
-    let provider = GoogleProvider::new("mock-key".to_string(), Some("gemini-pro".to_string()));
+    let provider = GoogleProvider::new("mock-key".to_string(), Some("gemini-pro".to_string()), None);
     // 注意：GoogleProvider的base_url是私有的，我们需要通过ProviderConfig设置
 
     let _request = LLMRequest {
@@ -53,7 +53,7 @@ async fn test_google_provider_system_message() {
     };
 
     // 测试消息转换
-    let provider = GoogleProvider::new("test-key".to_string(), None);
+    let provider = GoogleProvider::new("test-key".to_string(), None, None);
     let (system_msg, contents) = provider.convert_messages(request.messages);
 
     assert_eq!(system_msg, Some("You are a coding assistant".to_string()));
@@ -67,7 +67,7 @@ async fn test_google_provider_system_message() {
 
 #[tokio::test]
 async fn test_google_generation_config() {
-    let provider = GoogleProvider::new("test-key".to_string(), None);
+    let provider = GoogleProvider::new("test-key".to_string(), None, None);
 
     let request = LLMRequest {
         messages: vec![Message {
@@ -94,7 +94,7 @@ async fn test_google_generation_config() {
 async fn test_google_provider_error_handling() {
     // 测试错误处理 - 使用无效配置
     let provider =
-        GoogleProvider::new("invalid-key".to_string(), Some("invalid-model".to_string()));
+        GoogleProvider::new("invalid-key".to_string(), Some("invalid-model".to_string()), None);
 
     // 验证provider创建
     assert_eq!(provider.provider_name(), "google");

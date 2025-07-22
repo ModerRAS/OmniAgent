@@ -13,11 +13,12 @@ pub struct GoogleProvider {
 }
 
 impl GoogleProvider {
-    pub fn new(api_key: String, model: Option<String>) -> Self {
+    pub fn new(api_key: String, model: Option<String>, base_url: Option<String>) -> Self {
         Self {
             api_key,
             model: model.unwrap_or_else(|| "gemini-pro".to_string()),
-            base_url: "https://generativelanguage.googleapis.com/v1beta".to_string(),
+            base_url: base_url
+                .unwrap_or_else(|| "https://generativelanguage.googleapis.com/v1beta".to_string()),
         }
     }
 
@@ -249,6 +250,7 @@ mod tests {
         let provider = GoogleProvider::new(
             "test-key".to_string(),
             Some("gemini-pro-vision".to_string()),
+            None,
         );
 
         assert_eq!(provider.provider_name(), "google");
@@ -261,7 +263,7 @@ mod tests {
 
     #[test]
     fn test_message_conversion() {
-        let provider = GoogleProvider::new("test-key".to_string(), None);
+        let provider = GoogleProvider::new("test-key".to_string(), None, None);
 
         let messages = vec![
             crate::llm::providers::Message {

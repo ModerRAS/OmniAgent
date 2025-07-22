@@ -16,6 +16,7 @@ async fn test_claude_provider_with_mock_server() {
     let mut provider = ClaudeProvider::new(
         "mock-key".to_string(),
         Some("claude-3-haiku-20240307".to_string()),
+        None,
     );
     provider.base_url = mock_url;
 
@@ -51,6 +52,7 @@ async fn test_claude_provider_with_system_message() {
     let mut provider = ClaudeProvider::new(
         "mock-key".to_string(),
         Some("claude-3-sonnet-20240229".to_string()),
+        None,
     );
     provider.base_url = mock_url;
 
@@ -82,6 +84,7 @@ async fn test_claude_provider_error_handling() {
     let _provider = ClaudeProvider::new(
         "invalid-key".to_string(),
         Some("claude-3-haiku-20240307".to_string()),
+        None,
     );
     let _request = LLMRequest {
         messages: vec![Message {

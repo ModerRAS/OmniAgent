@@ -38,6 +38,7 @@ impl LLMManager {
             let provider: Box<dyn LLMProvider + Send + Sync> = Box::new(ClaudeProvider::new(
                 claude_config.api_key,
                 Some(claude_config.model),
+                claude_config.base_url,
             ));
             providers.insert("claude".to_string(), provider);
         }
@@ -46,6 +47,7 @@ impl LLMManager {
             let provider: Box<dyn LLMProvider + Send + Sync> = Box::new(GoogleProvider::new(
                 google_config.api_key,
                 Some(google_config.model),
+                google_config.base_url,
             ));
             providers.insert("google".to_string(), provider);
         }
@@ -72,10 +74,12 @@ impl LLMManager {
             "claude" => Box::new(ClaudeProvider::new(
                 "mock-key".to_string(),
                 Some("claude-3-haiku-20240307".to_string()),
+                None,
             )) as Box<dyn LLMProvider + Send + Sync>,
             "google" => Box::new(GoogleProvider::new(
                 "mock-key".to_string(),
                 Some("gemini-pro".to_string()),
+                None,
             )) as Box<dyn LLMProvider + Send + Sync>,
             _ => panic!("Unknown provider"),
         })

@@ -43,7 +43,7 @@ async fn test_app_startup() {
 #[tokio::test]
 async fn test_config_defaults() {
     let _config = AppConfig::default();
-    
+
     assert_eq!(_config.server.host, "0.0.0.0");
     assert_eq!(_config.server.port, 8080);
     assert_eq!(_config.llm.provider, "claude");
@@ -86,7 +86,7 @@ async fn test_llm_service_initialization() {
 #[test]
 fn test_cli_args() {
     let _config = AppConfig::default();
-    
+
     assert_eq!(_config.server.port, 8080);
     assert_eq!(_config.llm.provider, "claude");
     assert_eq!(_config.llm.model, "claude-3-haiku-20240307");
@@ -96,9 +96,8 @@ fn test_cli_args() {
 #[tokio::test]
 async fn test_config_validation() {
     let _config = AppConfig::default();
-    
+
     assert!(_config.server.port > 0);
-    assert!(_config.server.port <= 65535);
     assert!(!_config.llm.provider.is_empty());
     assert!(!_config.llm.model.is_empty());
 }
@@ -148,7 +147,7 @@ async fn test_concurrent_access() {
 
     let _config = &_agent.config;
     assert_eq!(_config.name, "concurrent-test");
-    
+
     handle.await.unwrap();
 }
 
@@ -168,11 +167,11 @@ async fn test_memory_usage() {
 #[tokio::test]
 async fn test_config_override() {
     let mut _config = AppConfig::default();
-    
+
     let original_port = _config.server.port;
     _config.server.port = 3001;
     _config.llm.provider = "openai".to_string();
-    
+
     assert_eq!(original_port, 8080);
     assert_eq!(_config.server.port, 3001);
     assert_eq!(_config.llm.provider, "openai");
@@ -186,8 +185,7 @@ async fn test_logging_setup() {
             .with_max_level(tracing::Level::INFO)
             .finish(),
     );
-    
-    assert!(true);
+
 }
 
 /// 测试环境变量读取
@@ -195,10 +193,10 @@ async fn test_logging_setup() {
 fn test_env_vars() {
     let mock_value = "test-value";
     std::env::set_var("TEST_VAR", mock_value);
-    
+
     let value = std::env::var("TEST_VAR").unwrap_or_default();
     assert_eq!(value, mock_value);
-    
+
     std::env::remove_var("TEST_VAR");
 }
 
@@ -206,7 +204,7 @@ fn test_env_vars() {
 #[tokio::test]
 async fn test_json_serialization() {
     let _config = AppConfig::default();
-    
+
     let json = serde_json::to_string(&_config).unwrap();
     assert!(!json.is_empty());
     assert!(json.contains("claude"));
@@ -216,7 +214,7 @@ async fn test_json_serialization() {
 #[tokio::test]
 async fn test_file_operations() {
     let test_file = "test_config.json";
-    
+
     let config_str = r#"{
         "server": {
             "port": 8081,
@@ -228,12 +226,12 @@ async fn test_file_operations() {
             "use_mock": true
         }
     }"#;
-    
+
     tokio::fs::write(test_file, config_str).await.unwrap();
-    
+
     let content = tokio::fs::read_to_string(test_file).await.unwrap();
     assert!(content.contains("test-model"));
-    
+
     tokio::fs::remove_file(test_file).await.unwrap();
 }
 
@@ -251,7 +249,7 @@ async fn test_end_to_end_flow() {
     assert!(_agent.llm.read().await.is_initialized());
     assert!(_agent.mcp_clients.is_empty());
     assert!(_agent.a2a_clients.is_empty());
-    
+
     assert_eq!(_config.server.port, 8080);
     assert_eq!(_config.llm.provider, "claude");
     assert!(_config.llm.use_mock);
@@ -261,15 +259,15 @@ async fn test_end_to_end_flow() {
 #[tokio::test]
 async fn test_performance_baseline() {
     let start = std::time::Instant::now();
-    
+
     let _agent = Agent::new(omni_agent::agent::AgentConfig {
         name: "perf-test".to_string(),
         description: "性能测试".to_string(),
         version: "1.0.0".to_string(),
     });
-    
+
     let elapsed = start.elapsed();
-    
+
     assert!(elapsed < Duration::from_secs(1));
     assert_eq!(_agent.config.name, "perf-test");
 }
@@ -297,11 +295,10 @@ async fn test_resource_cleanup() {
             description: "清理测试".to_string(),
             version: "1.0.0".to_string(),
         });
-        
+
         assert_eq!(_agent.config.name, "cleanup-test");
     }
-    
-    assert!(true);
+
 }
 
 /// 测试集成验证
@@ -324,7 +321,7 @@ async fn test_integration_validation() {
 #[tokio::test]
 async fn test_documentation_consistency() {
     let _config = AppConfig::default();
-    
+
     assert_eq!(_config.server.port, 8080);
     assert_eq!(_config.server.host, "0.0.0.0");
     assert_eq!(_config.llm.provider, "claude");
@@ -350,10 +347,10 @@ async fn test_api_compatibility() {
 #[tokio::test]
 async fn test_config_hot_reload() {
     let mut _config = AppConfig::default();
-    
+
     let original_port = _config.server.port;
     _config.server.port = 3001;
-    
+
     assert_eq!(original_port, 8080);
     assert_eq!(_config.server.port, 3001);
 }
@@ -388,16 +385,18 @@ async fn test_error_recovery() {
 #[tokio::test]
 async fn test_load_balancing() {
     let _agents: Vec<Agent> = (0..3)
-        .map(|i| Agent::new(omni_agent::agent::AgentConfig {
-            name: format!("load-test-{}", i),
-            description: format!("负载测试 {}", i),
-            version: "1.0.0".to_string(),
-        }))
+        .map(|i| {
+            Agent::new(omni_agent::agent::AgentConfig {
+                name: format!("load-test-{i}"),
+                description: format!("负载测试 {i}"),
+                version: "1.0.0".to_string(),
+            })
+        })
         .collect();
 
     assert_eq!(_agents.len(), 3);
     for (i, agent) in _agents.iter().enumerate() {
-        assert_eq!(agent.config.name, format!("load-test-{}", i));
+        assert_eq!(agent.config.name, format!("load-test-{i}"));
     }
 }
 

@@ -14,11 +14,11 @@ pub struct ClaudeProvider {
 }
 
 impl ClaudeProvider {
-    pub fn new(api_key: String, model: Option<String>) -> Self {
+    pub fn new(api_key: String, model: Option<String>, base_url: Option<String>) -> Self {
         Self {
             api_key,
             model: model.unwrap_or_else(|| "claude-3-sonnet-20240229".to_string()),
-            base_url: "https://api.anthropic.com/v1".to_string(),
+            base_url: base_url.unwrap_or_else(|| "https://api.anthropic.com/v1".to_string()),
         }
     }
 
@@ -198,6 +198,7 @@ mod tests {
         let provider = ClaudeProvider::new(
             "test-key".to_string(),
             Some("claude-3-opus-20240229".to_string()),
+            None,
         );
 
         assert_eq!(provider.provider_name(), "claude");
@@ -207,7 +208,7 @@ mod tests {
 
     #[test]
     fn test_convert_messages() {
-        let provider = ClaudeProvider::new("test-key".to_string(), None);
+        let provider = ClaudeProvider::new("test-key".to_string(), None, None);
 
         let messages = vec![
             Message {
@@ -243,7 +244,7 @@ mod tests {
             .expect("ANTHROPIC_API_KEY must be set for integration test");
 
         let mut provider =
-            ClaudeProvider::new(api_key, Some("claude-3-haiku-20240307".to_string()));
+            ClaudeProvider::new(api_key, Some("claude-3-haiku-20240307".to_string()), None);
 
         // Use a mock endpoint to avoid real API calls during testing
         provider.base_url = "https://httpbin.org/status/401".to_string();

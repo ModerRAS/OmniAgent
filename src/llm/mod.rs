@@ -63,6 +63,7 @@ impl LLMService {
                 Some(crate::llm::providers::ClaudeConfig {
                     api_key: config.api_key.clone(),
                     model: config.model.clone(),
+                    base_url: config.base_url.clone(),
                 })
             } else {
                 None
@@ -71,6 +72,7 @@ impl LLMService {
                 Some(crate::llm::providers::GoogleConfig {
                     api_key: config.api_key.clone(),
                     model: config.model.clone(),
+                    base_url: config.base_url.clone(),
                 })
             } else {
                 None

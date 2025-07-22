@@ -19,6 +19,7 @@ async fn test_agent_with_claude_llm() {
         claude: Some(ClaudeConfig {
             api_key: "test-key".to_string(),
             model: "claude-3-haiku-20240307".to_string(),
+            base_url: None,
         }),
         google: None,
     };
