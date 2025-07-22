@@ -12,6 +12,15 @@ pub struct LLMManager {
     default_provider: String,
 }
 
+impl std::fmt::Debug for LLMManager {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("LLMManager")
+            .field("default_provider", &self.default_provider)
+            .field("providers", &"HashMap<String, Box<dyn LLMProvider>>")
+            .finish()
+    }
+}
+
 impl LLMManager {
     pub fn new(config: ProviderConfig, default_provider: &str) -> Self {
         let mut providers = HashMap::new();

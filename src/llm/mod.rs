@@ -29,6 +29,7 @@ impl Default for LLMConfig {
     }
 }
 
+#[derive(Debug)]
 pub struct LLMService {
     pub manager: LLMManager,
     pub config: LLMConfig,
@@ -177,7 +178,7 @@ impl LLMService {
         self.manager.list_providers().await
     }
 
-    pub fn get_current_provider(&self) -> &str {
-        &self.config.provider
+    pub fn is_initialized(&self) -> bool {
+        true
     }
 }

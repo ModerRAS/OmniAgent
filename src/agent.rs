@@ -22,6 +22,7 @@ pub struct AgentConfig {
     pub version: String,
 }
 
+#[derive(Debug, Clone)]
 pub struct Agent {
     pub id: Uuid,
     pub config: AgentConfig,
