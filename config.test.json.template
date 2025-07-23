@@ -1,0 +1,43 @@
+{
+  "server": {
+    "port": 8080,
+    "host": "localhost"
+  },
+  "llm": {
+    "mock": false,
+    "providers": {
+      "openai": {
+        "enabled": false,
+        "api_key": "YOUR_OPENAI_API_KEY_HERE",
+        "model": "gpt-3.5-turbo",
+        "base_url": "https://api.openai.com/v1"
+      },
+      "claude": {
+        "enabled": false,
+        "api_key": "YOUR_ANTHROPIC_API_KEY_HERE",
+        "model": "claude-3-haiku-20240307",
+        "base_url": "https://api.anthropic.com"
+      },
+      "google": {
+        "enabled": false,
+        "api_key": "YOUR_GOOGLE_API_KEY_HERE",
+        "model": "gemini-pro",
+        "base_url": "https://generativelanguage.googleapis.com/v1beta"
+      }
+    }
+  },
+  "mcp": {
+    "enabled": true,
+    "servers": [
+      {
+        "name": "filesystem",
+        "command": "npx",
+        "args": ["@modelcontextprotocol/server-filesystem", "/tmp"]
+      }
+    ]
+  },
+  "a2a": {
+    "enabled": true,
+    "agents": []
+  }
+}

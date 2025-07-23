@@ -10,6 +10,7 @@ use crate::llm::LLMConfig;
 use crate::llm::LLMService;
 use crate::mcp::client::MCPClient;
 use crate::protocol::manifest::Manifest;
+use crate::protocol::agent_card::{AgentCard, AgentSkill};
 
 pub mod builder;
 pub use builder::AgentBuilder;
@@ -135,5 +136,54 @@ impl Agent {
                 Manifest::A2A(m) => m.capabilities.clone(),
             })
             .collect()
+    }
+
+    pub async fn get_agent_card(&self, base_url: String) -> AgentCard {
+        let capabilities = self.get_capabilities().await;
+        
+        // Convert capabilities into agent skills, or provide default skills if empty
+        let skills = if capabilities.is_empty() {
+            vec![
+                AgentSkill {
+                    id: "text_processing".to_string(),
+                    name: "Text Processing".to_string(),
+                    description: "Process and respond to text messages".to_string(),
+                    tags: vec!["text".to_string(), "processing".to_string()],
+                    examples: None,
+                    input_modes: None,
+                    output_modes: None,
+                },
+                AgentSkill {
+                    id: "llm_integration".to_string(),
+                    name: "LLM Integration".to_string(),
+                    description: "Use large language models for intelligent responses".to_string(),
+                    tags: vec!["llm".to_string(), "ai".to_string()],
+                    examples: None,
+                    input_modes: None,
+                    output_modes: None,
+                },
+            ]
+        } else {
+            capabilities
+                .iter()
+                .map(|capability| AgentSkill {
+                    id: capability.to_lowercase().replace(' ', "_"),
+                    name: capability.clone(),
+                    description: format!("Agent capability: {}", capability),
+                    tags: vec![capability.to_lowercase()],
+                    examples: None,
+                    input_modes: None,
+                    output_modes: None,
+                })
+                .collect()
+        };
+
+        AgentCard::new(
+            self.config.name.clone(),
+            self.config.description.clone(),
+            self.config.version.clone(),
+            format!("{}/", base_url.trim_end_matches('/')),
+            skills,
+        )
     }
 }

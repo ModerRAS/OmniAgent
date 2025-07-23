@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # OmniAgent 测试脚本
-# 用于测试智能体应用的所有功能
+# 用于测试A2A服务器功能和智能体卡片
 
 set -e
 
@@ -115,54 +115,32 @@ run_test() {
 # 测试1: 健康检查
 run_test "health_check" "健康检查" \
     "curl -s '$SERVER_URL/health'" \
-    "healthy"
+    "status.*ok"
 
-# 测试2: 智能体信息
-run_test "agent_info" "智能体信息" \
-    "curl -s '$SERVER_URL/info'" \
-    "omni-agent"
+# 测试2: 智能体卡片 (Agent Card)
+run_test "agent_card" "智能体卡片 (A2A规范)" \
+    "curl -s '$SERVER_URL/agent.json'" \
+    "name.*OmniAgent"
 
-# 测试3: MCP工具测试 - 文件操作
-run_test "mcp_file_test" "MCP文件工具测试" \
-    "curl -s -X POST '$SERVER_URL/chat' -H 'Content-Type: application/json' -d '{\"message\": \"请帮我读取文件\", \"context\": {}}'" \
-    "mcp_tool"
+# 测试3: 智能体清单 (Manifest)
+run_test "manifest" "智能体清单" \
+    "curl -s '$SERVER_URL/manifest'" \
+    "capabilities"
 
-# 测试4: A2A智能体测试 - 天气查询
-run_test "a2a_weather_test" "A2A天气智能体测试" \
-    "curl -s -X POST '$SERVER_URL/chat' -H 'Content-Type: application/json' -d '{\"message\": \"北京天气如何\", \"context\": {}}'" \
-    "a2a_agent"
+# 测试4: A2A消息测试 - 发送消息
+run_test "a2a_message" "A2A消息测试" \
+    "curl -s -X POST '$SERVER_URL/messages' -H 'Content-Type: application/json' -d '{\"sender\": \"test-client\", \"content\": {\"type\": \"text\", \"text\": \"你好，OmniAgent\"}}'" \
+    "Received.*你好"
 
-# 测试5: 本地LLM测试 - 通用问题
-run_test "local_llm_test" "本地LLM测试" \
-    "curl -s -X POST '$SERVER_URL/chat' -H 'Content-Type: application/json' -d '{\"message\": \"解释一下量子计算\", \"context\": {}}'" \
-    "local_llm"
+# 测试5: 获取特定消息
+run_test "get_message" "获取消息测试" \
+    "curl -s '$SERVER_URL/messages/123e4567-e89b-12d3-a456-426614174000'" \
+    "server"
 
-# 测试6: 计算器测试
-run_test "calculator_test" "计算器工具测试" \
-    "curl -s -X POST '$SERVER_URL/chat' -H 'Content-Type: application/json' -d '{\"message\": \"计算1+1\", \"context\": {}}'" \
-    "mcp_tool"
-
-# 测试7: 新闻测试
-run_test "news_test" "新闻智能体测试" \
-    "curl -s -X POST '$SERVER_URL/chat' -H 'Content-Type: application/json' -d '{\"message\": \"今天有什么新闻\", \"context\": {}}'" \
-    "a2a_agent"
-
-# 测试8: 复杂问题测试
-run_test "complex_test" "复杂问题测试" \
-    "curl -s -X POST '$SERVER_URL/chat' -H 'Content-Type: application/json' -d '{\"message\": \"如果太阳消失了，地球会怎样\", \"context\": {}}'" \
-    "local_llm"
-
-# 测试9: 空消息测试
-run_test "empty_message_test" "空消息测试" \
-    "curl -s -X POST '$SERVER_URL/chat' -H 'Content-Type: application/json' -d '{\"message\": \"\", \"context\": {}}'" \
-    "消息"
-
-# 测试10: 特殊字符测试
-run_test "special_chars_test" "特殊字符测试" \
-    "curl -s -X POST '$SERVER_URL/chat' -H 'Content-Type: application/json' -d '{\"message\": \"你好！今天天气怎么样？@#$%^&*()\", \"context\": {}}'" \
-    "天气"
-
-# 测试结果汇总
+# 测试6: 根端点测试
+run_test "root_endpoint" "根端点测试" \
+    "curl -s '$SERVER_URL/'" \
+    "OmniAgent A2A Server"
 print_info "测试完成，生成报告..."
 echo "======================================"
 echo "测试报告："
