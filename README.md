@@ -42,20 +42,31 @@ Create a `config.json` file in the project root (auto-generated on first run if 
     "use_mock": false
   },
   "mcp": {
-    "servers": [
-      {
-        "name": "example-mcp",
-        "url": "http://localhost:3000"
+    "enabled": true,
+    "servers": {
+      "example-mcp": {
+        "name": "Example MCP Server",
+        "description": "Example MCP tool server",
+        "url": "http://localhost:3000",
+        "timeout": 30,
+        "retry_attempts": 3,
+        "enabled": true
       }
-    ]
+    }
   },
   "a2a": {
-    "agents": [
-      {
-        "name": "example-agent",
-        "url": "http://localhost:8081"
+    "enabled": true,
+    "allow_external": true,
+    "servers": {
+      "example-agent": {
+        "name": "Example A2A Agent",
+        "description": "Example A2A agent server",
+        "url": "http://localhost:8081",
+        "auth_token": null,
+        "timeout": 30,
+        "enabled": true
       }
-    ]
+    }
   }
 }
 ```
@@ -89,6 +100,7 @@ USE_MOCK=true cargo run
 
 Once the server is running, you can test it with curl:
 
+**A2A Server端点:**
 ```bash
 # Check server health
 curl http://localhost:8080/health
@@ -96,15 +108,39 @@ curl http://localhost:8080/health
 # Get agent manifest
 curl http://localhost:8080/manifest
 
+# Get agent card (A2A specification)
+curl http://localhost:8080/agent.json
+
 # Send a message to the agent
 curl -X POST http://localhost:8080/messages \
   -H "Content-Type: application/json" \
   -d '{
+    "sender": "user",
+    "recipient": "omni-agent",
     "content": {
       "type": "text",
       "text": "Hello, can you help me?"
-    },
-    "metadata": {}
+    }
+  }'
+
+# Get message by ID
+curl http://localhost:8080/messages/{message_id}
+```
+
+**主应用端点:**
+```bash
+# Check server health
+curl http://localhost:8080/health
+
+# Get agent information
+curl http://localhost:8080/info
+
+# Send chat message
+curl -X POST http://localhost:8080/chat \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": "Hello, can you help me?",
+    "context": {}
   }'
 ```
 
@@ -158,89 +194,58 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-### Direct LLM Provider Usage
+### Configuration File (config.json)
 
-#### Google Gemini
-```rust
-use omni_agent::{
-    llm::providers::{LLMRequest, Message, MessageRole},
-    llm::providers::google::GoogleProvider,
-    llm::providers::LLMProvider,
-};
-
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let provider = GoogleProvider::new(
-        "your-google-api-key".to_string(),
-        Some("gemini-pro".to_string())
-    );
-
-    let request = LLMRequest {
-        messages: vec![
-            Message {
-                role: MessageRole::User,
-                content: "Explain quantum computing in simple terms".to_string(),
-            }
-        ],
-        model: "gemini-pro".to_string(),
-        temperature: Some(0.7),
-        max_tokens: Some(200),
-        stream: Some(false),
-    };
-
-    let response = provider.chat(request).await?;
-    println!("Response: {}", response.content);
-
-    Ok(())
+```json
+{
+  "server": {
+    "port": 8080,
+    "host": "127.0.0.1",
+    "cors_origins": ["*"]
+  },
+  "llm": {
+    "provider": "google",
+    "model": "gemini-pro",
+    "api_key": "YOUR_GOOGLE_API_KEY",
+    "base_url": null,
+    "temperature": 0.7,
+    "max_tokens": 1000,
+    "use_mock": false
+  },
+  "mcp": {
+    "enabled": true,
+    "servers": {
+      "file-tools": {
+        "name": "文件工具",
+        "description": "文件操作工具",
+        "url": "http://localhost:3000",
+        "timeout": 30,
+        "retry_attempts": 3,
+        "enabled": true
+      }
+    }
+  },
+  "a2a": {
+    "enabled": true,
+    "allow_external": true,
+    "servers": {
+      "weather-agent": {
+        "name": "天气智能体",
+        "description": "天气查询智能体",
+        "url": "http://localhost:8081",
+        "auth_token": null,
+        "timeout": 30,
+        "enabled": true
+      }
+    }
+  },
+  "logging": {
+    "level": "info",
+    "format": "json",
+    "file": null
+  }
 }
 ```
-
-#### Claude
-```rust
-use omni_agent::{
-    llm::providers::{LLMRequest, Message, MessageRole},
-    llm::providers::claude::ClaudeProvider,
-    llm::providers::LLMProvider,
-};
-
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let provider = ClaudeProvider::new(
-        "your-anthropic-api-key".to_string(),
-        Some("claude-3-haiku-20240307".to_string())
-    );
-
-    let request = LLMRequest {
-        messages: vec![
-            Message {
-                role: MessageRole::System,
-                content: "You are a helpful coding assistant".to_string(),
-            },
-            Message {
-                role: MessageRole::User,
-                content: "Write a Rust function to reverse a string".to_string(),
-            }
-        ],
-        model: "claude-3-haiku-20240307".to_string(),
-        temperature: Some(0.5),
-        max_tokens: Some(150),
-        stream: Some(false),
-    };
-
-    let response = provider.chat(request).await?;
-    println!("Response: {}", response.content);
-
-    Ok(())
-}
-```
-
-#### OpenAI
-```rust
-use omni_agent::{
-    llm::providers::{LLMRequest, Message, MessageRole},
-    llm::providers::openai::OpenAIProvider,
-    llm::providers::LLMProvider,
-};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -345,33 +350,64 @@ USE_MOCK=true cargo test
 
 ## API Endpoints
 
-### Health Check
+### A2A Server Endpoints
+
+#### Health Check
 ```http
 GET /health
 ```
 
-### Agent Manifest
+#### Agent Manifest
 ```http
 GET /manifest
 ```
 
-### Send Message
+#### Agent Card (A2A Specification)
+```http
+GET /agent.json
+```
+
+#### Send Message
 ```http
 POST /messages
 Content-Type: application/json
 
 {
+  "sender": "user",
+  "recipient": "omni-agent",
   "content": {
     "type": "text",
     "text": "Your message here"
-  },
-  "metadata": {}
+  }
 }
 ```
 
-### Get Message Status
+#### Get Message
 ```http
 GET /messages/{message_id}
+```
+
+### Main Application Endpoints
+
+#### Health Check
+```http
+GET /health
+```
+
+#### Agent Information
+```http
+GET /info
+```
+
+#### Chat Interface
+```http
+POST /chat
+Content-Type: application/json
+
+{
+  "message": "Your message here",
+  "context": {}
+}
 ```
 
 ## Development
