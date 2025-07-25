@@ -427,6 +427,19 @@ src/
 └── main.rs        # Entry point
 ```
 
+### Architecture
+
+The OmniAgent framework has two distinct architectural views:
+
+1. **Current Architecture** - The existing implementation with basic A2A server and client capabilities
+2. **Ideal Architecture** - The vision for a comprehensive agent platform with advanced routing and orchestration
+
+For detailed architecture diagrams and comparisons, please see the [docs](docs/) directory:
+
+- [Current Architecture](docs/current_architecture.md)
+- [Ideal Architecture](docs/ideal_architecture.md)
+- [Architecture Comparison](docs/architecture_comparison.md)
+
 ### Adding New LLM Provider
 
 1. Create provider in `src/llm/providers/[provider].rs`

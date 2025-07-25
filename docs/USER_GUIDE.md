@@ -4,6 +4,14 @@
 
 OmniAgent 是一个完整的可配置应用程序，能够连接多个 LLM 提供商、MCP 服务器，并同时作为 A2A 服务器对外提供服务。
 
+## 架构概览
+
+有关 OmniAgent 的架构信息，请参阅以下文档：
+
+- [当前架构](current_architecture.md) - 现有的实现架构
+- [理想架构](ideal_architecture.md) - 未来的发展方向
+- [架构对比](architecture_comparison.md) - 当前与理想架构的差异分析
+
 ## 🚀 快速开始
 
 ### 1. 环境准备
