@@ -1,91 +1,91 @@
-# OmniAgent Enhanced Architecture Requirements
+# OmniAgent 增强架构需求文档
 
-## Introduction
-This document outlines the requirements for enhancing the OmniAgent architecture to transform it from a basic agent framework into a sophisticated, enterprise-grade platform with advanced capabilities for complex task execution and multi-agent coordination. The enhanced architecture follows a 4-layer approach that builds upon the current implementation while incorporating key concepts from both the ideal architecture and Claude Code reference.
+## 引言
+本文档概述了将OmniAgent架构从基础智能体框架转变为具备复杂任务执行和多智能体协调能力的复杂企业级平台的需求。增强架构采用4层方法，在现有实现的基础上，结合理想架构和Claude代码参考的关键概念。
 
-## Requirements
+## 需求
 
-### 1. User Interface Layer
-As a user, I want a flexible interface layer so that I can interact with the agent system through multiple channels.
+### 1. 用户界面层
+作为用户，我需要灵活的界面层，以便通过多种渠道与智能体系统交互。
 
-1.1. The system SHALL provide a REST API interface built on Axum for external service integration.
-1.2. The system SHALL support WebSocket API for real-time communication (future enhancement).
-1.3. The system SHALL provide a CLI interface for direct command-line interaction (future enhancement).
-1.4. The system SHALL support multiple interface options for flexible user interaction.
-1.5. The system SHALL maintain backward compatibility with existing API endpoints.
+1.1. 系统应提供基于Axum的REST API接口，用于外部服务集成。
+1.2. 系统应支持WebSocket API进行实时通信（未来增强功能）。
+1.3. 系统应提供CLI接口用于直接命令行交互（未来增强功能）。
+1.4. 系统应支持多种界面选项以实现灵活的用户交互。
+1.5. 系统应保持与现有API端点的向后兼容性。
 
-### 2. Core Agent Layer
-As a system architect, I want a robust core agent layer so that the system can intelligently coordinate complex workflows and multi-agent interactions.
+### 2. 核心智能体层
+作为系统架构师，我需要强大的核心智能体层，使系统能够智能协调复杂的工作流程和多智能体交互。
 
-2.1. The system SHALL implement an Intelligent Router for advanced decision-making on request routing.
-2.2. The system SHALL provide an Agent Orchestration Engine to manage and coordinate multiple agents.
-2.3. The system SHALL support Protocol Adapters for A2A, MCP, and custom protocol integration.
-2.4. The system SHALL include a Capability Manager for dynamic capability discovery and management.
-2.5. The system SHALL implement a State Manager with advanced state management and persistence.
-2.6. The system SHALL provide a Workflow Engine for complex task execution and workflow management.
-2.7. The system SHALL include a Decision Engine for intelligent processing decisions.
-2.8. The system SHALL implement a recursive agent main loop for dynamic response generation.
-2.9. The system SHALL support conversation flow generation and pipeline handling.
-2.10. The system SHALL implement context compression triggers for efficient memory management.
-2.11. The system SHALL provide state machine controls for proper agent state transitions.
+2.1. 系统应实现智能路由器，用于高级请求路由决策。
+2.2. 系统应提供智能体编排引擎，用于管理和协调多个智能体。
+2.3. 系统应支持A2A、MCP和自定义协议的协议适配器。
+2.4. 系统应包含能力管理器，用于动态能力发现和管理。
+2.5. 系统应实现状态管理器，具备高级状态管理和持久化能力。
+2.6. 系统应提供工作流引擎，用于复杂任务执行和工作流程管理。
+2.7. 系统应包含决策引擎，用于智能处理决策。
+2.8. 系统应实现递归智能体主循环，用于动态响应生成。
+2.9. 系统应支持对话流生成和管道处理。
+2.10. 系统应实现上下文压缩触发器，用于高效内存管理。
+2.11. 系统应提供状态机控制，用于正确的智能体状态转换。
 
-### 3. Service Layer
-As a developer, I want a comprehensive service layer so that I can leverage advanced capabilities for LLM integration, tool execution, and security.
+### 3. 服务层
+作为开发者，我需要全面的服务层，以便能够利用LLM集成、工具执行和安全方面的高级能力。
 
-3.1. The system SHALL provide an LLM Service with multi-provider integration and Model Manager.
-3.2. The system SHALL implement a Tool Execution Engine with a precise validation pipeline.
-3.3. The system SHALL provide a Memory/Context Store with 3-tier memory management (short/medium/long-term).
-3.4. The system SHALL implement a Security Manager with comprehensive security, authentication, and authorization.
-3.5. The system SHALL support reverse token calculation for optimal context management.
-3.6. The system SHALL implement an 8-stage execution lifecycle for tool execution.
-3.7. The system SHALL provide input validation with schema validation.
-3.8. The system SHALL implement permission checking with multi-layer security.
-3.9. The system SHALL support concurrent execution management with intelligent scheduling.
-3.10. The system SHALL provide streaming result processing for real-time feedback.
-3.11. The system SHALL implement comprehensive error recovery with model degradation fallbacks.
+3.1. 系统应提供具备多提供商集成和模型管理器的LLM服务。
+3.2. 系统应实现具备精确验证管道的工具执行引擎。
+3.3. 系统应提供具备三层内存管理（短期/中期/长期）的内存/上下文存储。
+3.4. 系统应实现具备全面安全、认证和授权的安全管理器。
+3.5. 系统应支持反向标记计算，用于最佳上下文管理。
+3.6. 系统应实现工具执行的8阶段执行生命周期。
+3.7. 系统应提供具备模式验证的输入验证。
+3.8. 系统应实现具备多层安全的权限检查。
+3.9. 系统应支持具备智能调度的并发执行管理。
+3.10. 系统应提供用于实时反馈的流式结果处理。
+3.11. 系统应实现具备模型降级回退的全面错误恢复。
 
-### 4. External Integrations Layer
-As an integrator, I want a well-defined external integrations layer so that I can easily connect with various external systems and services.
+### 4. 外部集成层
+作为集成者，我需要明确定义的外部集成层，以便能够轻松连接各种外部系统和服务。
 
-4.1. The system SHALL support integration with external A2A Agents.
-4.2. The system SHALL support integration with external MCP Tools.
-4.3. The system SHALL support integration with LLM Providers (OpenAI/Claude/Google).
-4.4. The system SHALL support integration with Database/Storage systems.
-4.5. The system SHALL provide standardized interfaces for all external integrations.
+4.1. 系统应支持与外部A2A智能体的集成。
+4.2. 系统应支持与外部MCP工具的集成。
+4.3. 系统应支持与LLM提供商（OpenAI/Claude/Google）的集成。
+4.4. 系统应支持与数据库/存储系统的集成。
+4.5. 系统应为所有外部集成提供标准化接口。
 
-### 5. Event-Driven Coordination System
-As a system administrator, I want an event-driven coordination system so that all components can communicate efficiently and in real-time.
+### 5. 事件驱动协调系统
+作为系统管理员，我需要事件驱动协调系统，以便所有组件能够高效实时通信。
 
-5.1. The system SHALL implement a System-Reminder mechanism as the coordination nervous system.
-5.2. The system SHALL provide a central event dispatcher for all component communication.
-5.3. The system SHALL include a message factory for standardized inter-component communication.
-5.4. The system SHALL implement a context injector for intelligent event processing.
-5.5. The system SHALL provide real-time status updates with spinner/V0 status message system.
+5.1. 系统应实现作为协调神经系统的系统提醒机制。
+5.2. 系统应提供中央事件调度器，用于所有组件通信。
+5.3. 系统应包含消息工厂，用于标准化组件间通信。
+5.4. 系统应实现上下文注入器，用于智能事件处理。
+5.5. 系统应提供带有加载器/V0状态消息系统的实时状态更新。
 
-### 6. UI Integration (Future Phase)
-As a user, I want a rich user interface so that I can interact with the system more intuitively.
+### 6. UI集成（未来阶段）
+作为用户，我需要丰富的用户界面，以便更直观地交互系统。
 
-6.1. The system SHALL support React-based UI components for enhanced user experience (future phase).
-6.2. The system SHALL provide real-time state synchronization between agent and UI.
-6.3. The system SHALL implement a notification hook system for user feedback.
-6.4. The system SHALL provide interactive elements for improved user engagement.
+6.1. 系统应支持基于React的UI组件，用于增强用户体验（未来阶段）。
+6.2. 系统应提供智能体和UI之间的实时状态同步。
+6.3. 系统应实现用于用户反馈的通知钩子系统。
+6.4. 系统应提供用于改进用户参与的交互元素。
 
-### 7. Implementation Roadmap
-As a project manager, I want a clear implementation roadmap so that I can plan and execute the architecture enhancement systematically.
+### 7. 实施路线图
+作为项目经理，我需要明确的实施路线图，以便能够系统地规划和执行架构增强。
 
-7.1. The system SHALL follow a 3-phase implementation approach:
-7.1.1. Phase 1: Foundation Alignment - Refactor codebase to implement 4-layer architecture and add missing core components.
-7.1.2. Phase 2: Advanced Coordination - Implement System-Reminder mechanism and advanced memory management.
-7.1.3. Phase 3: Sophistication and Optimization - Add recursive agent loop capabilities and UI integration.
-7.2. The system SHALL maintain the simplicity and extensibility of the Rust ecosystem throughout all phases.
+7.1. 系统应遵循3阶段实施方法：
+7.1.1. 第1阶段：基础对齐 - 重构代码库以实现4层架构并添加缺失的核心组件。
+7.1.2. 第2阶段：高级协调 - 实现系统提醒机制和高级内存管理。
+7.1.3. 第3阶段：复杂化和优化 - 添加递归智能体循环能力和UI集成。
+7.2. 系统应在所有阶段中保持Rust生态系统的简单性和可扩展性。
 
-### 8. Quality Attributes
-As a stakeholder, I want the system to meet high quality standards so that it can be reliable, scalable, and maintainable.
+### 8. 质量属性
+作为利益相关者，我需要系统满足高质量标准，使其可靠、可扩展且可维护。
 
-8.1. The system SHALL be scalable with a layered approach that allows for easy scaling and extension.
-8.2. The system SHALL be flexible with protocol adapters enabling integration with various external systems.
-8.3. The system SHALL be intelligent with advanced decision-making and workflow capabilities.
-8.4. The system SHALL be reliable with comprehensive error handling and recovery mechanisms.
-8.5. The system SHALL be secure with multi-layer security checks and permission management.
-8.6. The system SHALL be performant with efficient memory management and concurrent execution controls.
-8.7. The system SHALL provide an excellent user experience with multiple interface options and real-time feedback.
+8.1. 系统应具备可扩展性，采用允许轻松扩展和扩展的分层方法。
+8.2. 系统应具备灵活性，具备协议适配器，支持与各种外部系统的集成。
+8.3. 系统应具备智能性，具备先进的决策和工作流程能力。
+8.4. 系统应具备可靠性，具备全面的错误处理和恢复机制。
+8.5. 系统应具备安全性，具备多层安全检查和权限管理。
+8.6. 系统应具备性能，具备高效的内存管理和并发执行控制。
+8.7. 系统应提供卓越的用户体验，具备多种界面选项和实时反馈。
