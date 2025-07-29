@@ -52,6 +52,29 @@ graph TD
   - `GET /capabilities` - 可用能力
   - `POST /workflows` - 工作流执行
   - `GET /status` - 实时状态更新
+  - `POST /buffer` - 对话缓冲区管理
+
+#### 1.2 对话双重缓冲机制
+- **机制**: 用户发送的对话消息首先进入缓冲区，下次聊天时自动添加到上下文中
+- **缓冲区管理**: 
+  - 短期缓冲区存储最近的对话历史
+  - 上下文注入器在适当时候将缓冲区内容注入到请求上下文中
+  - 缓冲区大小可配置，避免超出LLM上下文限制
+- **数据结构**:
+```rust
+pub struct 对话缓冲区 {
+    消息队列: Arc<RwLock<VecDeque<缓冲消息>>>,
+    最大大小: usize,
+    当前大小: AtomicUsize,
+}
+
+pub struct 缓冲消息 {
+    pub 消息内容: String,
+    pub 发送时间: DateTime<Utc>,
+    pub 消息类型: 消息类型, // 用户消息/系统消息/工具响应
+    pub 上下文相关性: f32, // 用于智能过滤不相关信息
+}
+```
 
 #### 1.2 WebSocket API（未来）
 - **协议**: 基于JSON的消息协议
@@ -124,6 +147,7 @@ pub struct 状态管理器 {
     短期: Arc<RwLock<内存存储>>,
     中期: Arc<RwLock<内存存储>>,
     长期: Arc<RwLock<内存存储>>,
+    对话缓冲区: Arc<RwLock<对话缓冲区>>,
     压缩服务: Arc<压缩服务>,
 }
 
@@ -131,6 +155,9 @@ impl 状态管理器 {
     async fn 存储状态(&self, 键: String, 值: 状态数据, 层级: 内存层级);
     async fn 检索状态(&self, 键: String, 层级: 内存层级) -> Option<状态数据>;
     async fn 压缩上下文(&self, 上下文: 上下文数据) -> 压缩上下文;
+    async fn 添加到缓冲区(&self, 消息: 缓冲消息) -> Result<(), 错误>;
+    async fn 从缓冲区获取上下文(&self) -> Vec<缓冲消息>;
+    async fn 清理缓冲区(&self) -> Result<(), 错误>;
 }
 ```
 
@@ -298,6 +325,24 @@ pub struct 安全上下文 {
     pub 用户: Option<用户>,
     pub 权限: Vec<权限>,
     pub 会话: Option<会话>,
+}
+
+// 对话缓冲区消息
+pub struct 缓冲消息 {
+    pub id: Uuid,
+    pub 消息内容: String,
+    pub 发送时间: DateTime<Utc>,
+    pub 消息类型: 消息类型,
+    pub 上下文相关性: f32,
+    pub 元数据: HashMap<String, 值>,
+}
+
+// 消息类型枚举
+pub enum 消息类型 {
+    用户消息,
+    系统消息,
+    工具响应,
+    LLM响应,
 }
 ```
 
