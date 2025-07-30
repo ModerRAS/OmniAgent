@@ -1,9 +1,13 @@
-//! 工具执行引擎模块 - 简化版
+//! 工具执行引擎模块 - 实现8阶段生命周期
+
+pub mod enhanced_engine;
 
 use std::collections::HashMap;
 use serde_json::Value;
 use std::sync::Arc;
 use tokio::sync::RwLock;
+
+pub use enhanced_engine::*;
 
 /// 工具错误
 #[derive(Debug, thiserror::Error)]
@@ -12,6 +16,14 @@ pub enum ToolError {
     ExecutionFailed(String),
     #[error("工具未找到: {0}")]
     ToolNotFound(String),
+    #[error("验证失败: {0}")]
+    ValidationFailed(String),
+    #[error("权限被拒绝: {0}")]
+    PermissionDenied(String),
+    #[error("并发限制超出: {0}")]
+    ConcurrencyLimitExceeded(String),
+    #[error("缓存错误: {0}")]
+    CacheError(String),
 }
 
 /// 工具 trait
@@ -22,7 +34,7 @@ pub trait Tool: Send + Sync {
     async fn execute(&self, parameters: Value) -> Result<Value, ToolError>;
 }
 
-/// 工具执行引擎
+/// 简化版工具执行引擎（向后兼容）
 pub struct ToolExecutionEngine {
     tools: Arc<RwLock<HashMap<String, Arc<dyn Tool>>>>,
 }

@@ -146,3 +146,8 @@ let provider = GoogleProvider::new("api-key".to_string(), Some("gemini-pro".to_s
 - **Integration Tests**: Provider-specific tests with mock servers
 - **End-to-End Tests**: Full workflow testing
 - **Mock Mode**: All tests can run without real API keys
+
+## Documentation Guidelines
+
+### Simplification Documentation
+- 如果你想简化功能或简化流程，或者因为实现复杂性不得不选择简化流程，请你把简化部分以及要简化的原因记录在docs中

@@ -57,7 +57,7 @@ async fn chat_handler(
         omni_agent::core::router::RouteTarget::LocalLLM => {
             // 使用LLM服务处理
             match state.llm_service.process_message(&request.message, &[]).await {
-                Ok(response) => (response, "local_llm".to_string()),
+                Ok((response, _token_usage)) => (response, "local_llm".to_string()),
                 Err(e) => (format!("处理失败: {}", e), "error".to_string()),
             }
         }

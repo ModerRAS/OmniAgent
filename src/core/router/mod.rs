@@ -14,7 +14,7 @@ pub struct RouteDecision {
 }
 
 /// 路由目标
-#[derive(Debug)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub enum RouteTarget {
     LocalLLM,
     A2AAgent(String),

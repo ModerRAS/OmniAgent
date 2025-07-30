@@ -112,8 +112,10 @@ async fn test_llm_service() {
     let llm_service = LLMService::new(true); // 使用模拟模式
     
     // 测试消息处理
-    let response = llm_service.process_message("你好，世界!", &[]).await.unwrap();
+    let (response, token_usage) = llm_service.process_message("你好，世界!", &[]).await.unwrap();
     println!("   LLM响应: {}", response);
+    println!("   令牌使用: 提示{}个, 完成{}个, 总计{}个", 
+             token_usage.prompt_tokens, token_usage.completion_tokens, token_usage.total_tokens);
     
     println!("   ✅ LLM服务测试通过");
 }
