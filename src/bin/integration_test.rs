@@ -49,14 +49,23 @@ async fn chat_handler(
 ) -> JsonResponse<AgentResponse> {
     info!("处理用户请求: {}", request.message);
     
-    // 1. 使用智能路由器决定处理方式
+    // 1. 首先获取对话缓冲区中的历史消息
+    let buffer_messages = state.state_manager.get_buffer_messages().await;
+    info!("缓冲区中找到 {} 条历史消息", buffer_messages.len());
+    
+    // 2. 使用智能路由器决定处理方式
     let decision = state.router.route_message(&request.message).await;
     
-    // 2. 根据决策处理请求
+    // 3. 根据决策处理请求
     let (response_message, source) = match decision.target {
         omni_agent::core::router::RouteTarget::LocalLLM => {
-            // 使用LLM服务处理
-            match state.llm_service.process_message(&request.message, &[]).await {
+            // 使用LLM服务处理，传入缓冲区消息作为上下文
+            let context_messages: Vec<_> = buffer_messages
+                .iter()
+                .map(|msg| msg.content.clone())
+                .collect();
+            
+            match state.llm_service.process_message(&request.message, &context_messages).await {
                 Ok((response, _token_usage)) => (response, "local_llm".to_string()),
                 Err(e) => (format!("处理失败: {}", e), "error".to_string()),
             }
@@ -69,7 +78,7 @@ async fn chat_handler(
         }
     };
     
-    // 3. 将用户消息添加到对话缓冲区
+    // 4. 将用户消息添加到对话缓冲区
     let buffered_message = BufferedMessage {
         id: uuid::Uuid::new_v4(),
         content: request.message.clone(),
@@ -80,6 +89,19 @@ async fn chat_handler(
     
     if let Err(e) = state.state_manager.add_to_buffer(buffered_message).await {
         info!("添加消息到缓冲区失败: {}", e);
+    }
+    
+    // 5. 将响应也添加到缓冲区
+    let response_buffered_message = BufferedMessage {
+        id: uuid::Uuid::new_v4(),
+        content: response_message.clone(),
+        timestamp: chrono::Utc::now(),
+        message_type: MessageType::LLMResponse,
+        context_relevance: 0.8,
+    };
+    
+    if let Err(e) = state.state_manager.add_to_buffer(response_buffered_message).await {
+        info!("添加响应到缓冲区失败: {}", e);
     }
     
     JsonResponse(AgentResponse {
@@ -102,9 +124,12 @@ async fn status_handler(State(state): State<AppState>) -> JsonResponse<serde_jso
     JsonResponse(json!({
         "buffer_size": state.state_manager.buffer_size(),
         "router_status": "active",
-        "llm_service": "mock_mode"
+        "llm_service": "mock_mode",
+        "buffer_messages": state.state_manager.get_buffer_messages().await.len()
     }))
 }
+
+use axum::extract::State;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -135,7 +160,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/chat", post(chat_handler))
         .with_state(state);
     
-    let addr = "127.0.0.1:8080";
+    let addr = "127.0.0.1:3000";
     info!("🌐 服务器启动于 http://{}", addr);
     
     let listener = tokio::net::TcpListener::bind(addr).await?;
@@ -143,5 +168,3 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     
     Ok(())
 }
-
-use axum::extract::State;
