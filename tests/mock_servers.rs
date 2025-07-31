@@ -1,286 +1,200 @@
-use axum::serve;
-use axum::{extract::State, routing::post, Json, Router};
+//! Mock服务器实现，用于测试API调用和协议交互
+
+use axum::{
+    response::Json as JsonResponse,
+    routing::{get, post},
+    Router,
+};
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::sync::Arc;
+use serde_json::json;
+use std::net::SocketAddr;
 use tokio::net::TcpListener;
-use tokio::sync::RwLock;
 
-// Mock Claude Server
+/// Mock A2A服务器响应结构
 #[derive(Debug, Serialize, Deserialize)]
-struct MockClaudeRequest {
-    model: String,
-    messages: Vec<MockClaudeMessage>,
-    max_tokens: u32,
-    temperature: Option<f32>,
-    system: Option<String>,
+struct MockA2AResponse {
+    message_id: String,
+    response: String,
+    status: String,
 }
 
+/// Mock MCP服务器响应结构
 #[derive(Debug, Serialize, Deserialize)]
-struct MockClaudeMessage {
-    role: String,
-    content: Vec<MockClaudeContent>,
+struct MockMCPResponse {
+    result: String,
+    id: Option<i32>,
+    jsonrpc: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-struct MockClaudeContent {
-    #[serde(rename = "type")]
-    type_: String,
-    text: Option<String>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct MockClaudeResponse {
-    id: String,
-    content: Vec<MockClaudeResponseContent>,
-    model: String,
-    role: String,
-    stop_reason: Option<String>,
-    usage: MockUsage,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct MockClaudeResponseContent {
-    #[serde(rename = "type")]
-    type_: String,
-    text: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct MockUsage {
-    input_tokens: u32,
-    output_tokens: u32,
-}
-
-#[allow(dead_code)]
-#[derive(Clone)]
-struct MockClaudeState {
-    responses: Arc<RwLock<HashMap<String, String>>>,
-}
-
-#[allow(dead_code)]
-async fn mock_claude_handler(
-    State(state): State<MockClaudeState>,
-    Json(request): Json<MockClaudeRequest>,
-) -> Json<MockClaudeResponse> {
-    let response_text = state
-        .responses
-        .read()
-        .await
-        .get(
-            &request.messages.last().unwrap().content[0]
-                .text
-                .clone()
-                .unwrap_or_default(),
-        )
-        .cloned()
-        .unwrap_or_else(|| "This is a mock Claude response".to_string());
-
-    Json(MockClaudeResponse {
-        id: "mock-123".to_string(),
-        content: vec![MockClaudeResponseContent {
-            type_: "text".to_string(),
-            text: response_text,
-        }],
-        model: request.model,
-        role: "assistant".to_string(),
-        stop_reason: Some("end_turn".to_string()),
-        usage: MockUsage {
-            input_tokens: 10,
-            output_tokens: 20,
-        },
-    })
-}
-
-// Mock OpenAI Server
-#[derive(Debug, Serialize, Deserialize)]
-struct MockOpenAIRequest {
-    model: String,
-    messages: Vec<MockOpenAIMessage>,
-    temperature: Option<f64>,
-    max_tokens: Option<i64>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct MockOpenAIMessage {
-    role: String,
-    content: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct MockOpenAIResponse {
-    id: String,
-    object: String,
-    created: i64,
-    model: String,
-    choices: Vec<MockOpenAIChoice>,
-    usage: MockOpenAIUsage,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct MockOpenAIChoice {
-    index: i32,
-    message: MockOpenAIMessage,
-    finish_reason: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct MockOpenAIUsage {
-    prompt_tokens: u32,
-    completion_tokens: u32,
-    total_tokens: u32,
-}
-
-#[allow(dead_code)]
-#[derive(Clone)]
-struct MockOpenAIState {
-    responses: Arc<RwLock<HashMap<String, String>>>,
-}
-
-#[allow(dead_code)]
-async fn mock_openai_handler(
-    State(state): State<MockOpenAIState>,
-    Json(request): Json<MockOpenAIRequest>,
-) -> Json<MockOpenAIResponse> {
-    let last_message = request.messages.last().unwrap();
-    let response_text = state
-        .responses
-        .read()
-        .await
-        .get(&last_message.content)
-        .cloned()
-        .unwrap_or_else(|| "This is a mock OpenAI response".to_string());
-
-    Json(MockOpenAIResponse {
-        id: "mock-456".to_string(),
-        object: "chat.completion".to_string(),
-        created: chrono::Utc::now().timestamp(),
-        model: request.model,
-        choices: vec![MockOpenAIChoice {
-            index: 0,
-            message: MockOpenAIMessage {
-                role: "assistant".to_string(),
-                content: response_text,
-            },
-            finish_reason: "stop".to_string(),
-        }],
-        usage: MockOpenAIUsage {
-            prompt_tokens: 10,
-            completion_tokens: 20,
-            total_tokens: 30,
-        },
-    })
-}
-
-#[allow(dead_code)]
-pub async fn start_mock_claude_server(port: u16) -> String {
-    let state = MockClaudeState {
-        responses: Arc::new(RwLock::new(HashMap::new())),
-    };
-
-    // 添加一些测试响应
-    state.responses.write().await.insert(
-        "Hello".to_string(),
-        "Hello! This is a mock Claude response.".to_string(),
-    );
-
+/// 启动Mock A2A服务器
+pub async fn start_mock_a2a_server() -> Result<String, Box<dyn std::error::Error>> {
     let app = Router::new()
-        .route("/v1/messages", post(mock_claude_handler))
-        .with_state(state);
+        .route("/health", get(mock_a2a_health))
+        .route("/messages", post(mock_a2a_message))
+        .route("/messages/:id", get(mock_a2a_get_message));
 
-    let url = format!("http://localhost:{port}");
+    let addr = SocketAddr::from(([127, 0, 0, 1], 0)); // 使用端口0让系统分配可用端口
+    let listener = TcpListener::bind(addr).await?;
+    let addr = listener.local_addr()?;
+    
     tokio::spawn(async move {
-        let listener = TcpListener::bind(format!("0.0.0.0:{port}")).await.unwrap();
-        serve(listener, app).await.unwrap();
+        axum::serve(listener, app).await.unwrap();
     });
 
-    url
+    Ok(format!("http://{}", addr))
 }
 
-#[allow(dead_code)]
-pub async fn start_mock_google_server(port: u16) -> String {
-    let state = MockOpenAIState {
-        responses: Arc::new(RwLock::new(HashMap::new())),
-    };
-
-    // 添加一些测试响应
-    state.responses.write().await.insert(
-        "Hello".to_string(),
-        "Hello! This is a mock Google Gemini response.".to_string(),
-    );
-
+/// 启动Mock MCP服务器
+pub async fn start_mock_mcp_server() -> Result<String, Box<dyn std::error::Error>> {
     let app = Router::new()
-        .route(
-            "/v1beta/models/gemini-pro:generateContent",
-            post(mock_google_handler),
-        )
-        .with_state(state);
+        .route("/mcp", post(mock_mcp_call))
+        .route("/health", get(mock_mcp_health));
 
-    let url = format!("http://localhost:{port}");
+    let addr = SocketAddr::from(([127, 0, 0, 1], 0)); // 使用端口0让系统分配可用端口
+    let listener = TcpListener::bind(addr).await?;
+    let addr = listener.local_addr()?;
+    
     tokio::spawn(async move {
-        let listener = TcpListener::bind(format!("0.0.0.0:{port}")).await.unwrap();
-        serve(listener, app).await.unwrap();
+        axum::serve(listener, app).await.unwrap();
     });
 
-    url
+    Ok(format!("http://{}", addr))
 }
 
-#[allow(dead_code)]
-async fn mock_google_handler(
-    State(state): State<MockOpenAIState>,
-    Json(request): Json<serde_json::Value>,
-) -> Json<serde_json::Value> {
-    let request_text = request["contents"][0]["parts"][0]["text"]
-        .as_str()
-        .unwrap_or("Hello");
-
-    let response_text = state
-        .responses
-        .read()
-        .await
-        .get(request_text)
-        .cloned()
-        .unwrap_or_else(|| "This is a mock Google Gemini response".to_string());
-
-    Json(serde_json::json!({
-        "candidates": [{
-            "content": {
-                "parts": [{"text": response_text}],
-                "role": "model"
-            },
-            "finishReason": "STOP",
-            "index": 0
-        }],
-        "usageMetadata": {
-            "promptTokenCount": 10,
-            "candidatesTokenCount": 20,
-            "totalTokenCount": 30
-        },
-        "modelVersion": "gemini-pro"
+/// Mock A2A健康检查端点
+async fn mock_a2a_health() -> JsonResponse<serde_json::Value> {
+    JsonResponse(json!({
+        "status": "healthy",
+        "service": "mock-a2a-server"
     }))
 }
 
-#[allow(dead_code)]
-pub async fn start_mock_openai_server(port: u16) -> String {
-    let state = MockOpenAIState {
-        responses: Arc::new(RwLock::new(HashMap::new())),
-    };
+/// Mock A2A消息处理端点
+async fn mock_a2a_message(
+    axum::Json(payload): axum::Json<serde_json::Value>,
+) -> JsonResponse<MockA2AResponse> {
+    let message_id = payload.get("id").and_then(|v| v.as_str()).unwrap_or("unknown");
+    
+    JsonResponse(MockA2AResponse {
+        message_id: message_id.to_string(),
+        response: format!("Mock A2A响应: 处理了来自{}的消息", message_id),
+        status: "success".to_string(),
+    })
+}
 
-    // 添加一些测试响应
-    state.responses.write().await.insert(
-        "Hello".to_string(),
-        "Hello! This is a mock OpenAI response.".to_string(),
-    );
+/// Mock A2A获取消息端点
+async fn mock_a2a_get_message(
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> JsonResponse<serde_json::Value> {
+    JsonResponse(json!({
+        "id": id,
+        "content": format!("这是ID为{}的mock消息内容", id),
+        "sender": "mock-sender",
+        "recipient": "mock-recipient",
+        "timestamp": chrono::Utc::now().to_rfc3339()
+    }))
+}
 
-    let app = Router::new()
-        .route("/v1/chat/completions", post(mock_openai_handler))
-        .with_state(state);
+/// Mock MCP健康检查端点
+async fn mock_mcp_health() -> JsonResponse<serde_json::Value> {
+    JsonResponse(json!({
+        "status": "healthy",
+        "service": "mock-mcp-server"
+    }))
+}
 
-    let url = format!("http://localhost:{port}");
-    tokio::spawn(async move {
-        let listener = TcpListener::bind(format!("0.0.0.0:{port}")).await.unwrap();
-        serve(listener, app).await.unwrap();
-    });
+/// Mock MCP工具调用端点
+async fn mock_mcp_call(
+    axum::Json(payload): axum::Json<serde_json::Value>,
+) -> JsonResponse<MockMCPResponse> {
+    let method = payload.get("method").and_then(|v| v.as_str()).unwrap_or("unknown");
+    let id = payload.get("id").and_then(|v| v.as_i64()).map(|v| v as i32);
+    
+    JsonResponse(MockMCPResponse {
+        result: format!("Mock MCP响应: 执行了{}方法", method),
+        id,
+        jsonrpc: "2.0".to_string(),
+    })
+}
 
-    url
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use reqwest;
+    use serde_json::json;
+
+    #[tokio::test]
+    async fn test_mock_a2a_server() {
+        let server_url = start_mock_a2a_server().await.unwrap();
+        
+        // 测试健康检查
+        let client = reqwest::Client::new();
+        let health_response = client
+            .get(&format!("{}/health", server_url))
+            .send()
+            .await
+            .unwrap();
+        
+        assert_eq!(health_response.status(), 200);
+        
+        let health_json: serde_json::Value = health_response.json().await.unwrap();
+        assert_eq!(health_json["status"], "healthy");
+        assert_eq!(health_json["service"], "mock-a2a-server");
+        
+        // 测试消息发送
+        let message_response = client
+            .post(&format!("{}/messages", server_url))
+            .json(&json!({
+                "id": "test-message-1",
+                "content": "测试消息"
+            }))
+            .send()
+            .await
+            .unwrap();
+        
+        assert_eq!(message_response.status(), 200);
+        
+        let message_result: MockA2AResponse = message_response.json().await.unwrap();
+        assert_eq!(message_result.message_id, "test-message-1");
+        assert!(message_result.response.contains("Mock A2A响应"));
+        assert_eq!(message_result.status, "success");
+    }
+
+    #[tokio::test]
+    async fn test_mock_mcp_server() {
+        let server_url = start_mock_mcp_server().await.unwrap();
+        
+        // 测试健康检查
+        let client = reqwest::Client::new();
+        let health_response = client
+            .get(&format!("{}/health", server_url))
+            .send()
+            .await
+            .unwrap();
+        
+        assert_eq!(health_response.status(), 200);
+        
+        let health_json: serde_json::Value = health_response.json().await.unwrap();
+        assert_eq!(health_json["status"], "healthy");
+        assert_eq!(health_json["service"], "mock-mcp-server");
+        
+        // 测试MCP调用
+        let mcp_response = client
+            .post(&format!("{}/mcp", server_url))
+            .json(&json!({
+                "method": "test.method",
+                "params": {},
+                "id": 123
+            }))
+            .send()
+            .await
+            .unwrap();
+        
+        assert_eq!(mcp_response.status(), 200);
+        
+        let mcp_result: MockMCPResponse = mcp_response.json().await.unwrap();
+        assert_eq!(mcp_result.id, Some(123));
+        assert_eq!(mcp_result.jsonrpc, "2.0");
+        assert!(mcp_result.result.contains("Mock MCP响应"));
+    }
 }
