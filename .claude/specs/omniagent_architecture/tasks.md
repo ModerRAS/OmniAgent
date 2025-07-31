@@ -156,6 +156,21 @@
   - [x] 并发测试
   - [x] 内存使用测试
   - [x] 对话缓冲区性能测试
+- [ ] 补充单元测试
+  - [ ] 核心路由器单元测试 (src/core/router/mod.rs)
+  - [ ] 状态管理器单元测试 (src/core/state/mod.rs)
+  - [ ] 能力管理器单元测试 (src/core/capabilities/mod.rs)
+  - [ ] LLM服务单元测试 (src/services/llm/mod.rs)
+  - [ ] 内存服务单元测试 (src/services/memory/mod.rs)
+  - [ ] 工具执行引擎单元测试 (src/services/tools/enhanced_engine.rs)
+  - [ ] 协议适配器单元测试 (src/integrations/adapters/mod.rs)
+  - [ ] 事件系统单元测试 (src/integrations/events/bus.rs)
+- [ ] 补充集成测试
+  - [ ] API端点集成测试 (src/ui/api/mod.rs)
+  - [ ] 对话缓冲区专门测试 (src/core/state/mod.rs)
+  - [ ] LLM管理器集成测试 (src/llm/manager.rs)
+  - [ ] A2A协议集成测试 (src/a2a/)
+  - [ ] MCP协议集成测试 (src/mcp/)
 
 #### 4.2 文档和示例
 - [x] 创建示例代码
@@ -226,8 +241,8 @@ OMNI_AGENT_MOCK_PROVIDERS=true
 - [x] 上下文自动注入功能有效
 
 ### 质量验证
-- [x] 代码覆盖率 > 80%
-- [x] 所有测试通过
+- [ ] 代码覆盖率 > 80%
+- [ ] 所有测试通过
 - [x] 文档完整
 - [x] 无内存泄漏
 - [x] 并发安全
@@ -251,7 +266,7 @@ OMNI_AGENT_MOCK_PROVIDERS=true
 
 ### 最终交付
 - [x] 所有功能实现
-- [x] 所有测试通过
+- [ ] 所有测试通过
 - [x] 文档完整
 - [x] 性能优化完成
 - [x] 安全审查通过

@@ -322,21 +322,42 @@ pub struct SecurityContext {
 - Individual component functionality
 - Error handling edge cases
 - State transitions and workflows
+- Router decision logic validation
+- State manager buffer operations
+- Capability manager registration and discovery
+- LLM service token calculation and caching
+- Memory service compression quality
+- Tool execution engine lifecycle phases
+- Protocol adapter capability matching
+- Event system publishing and subscription
 
 ### Integration Tests
 - Cross-layer communication
 - External service integrations
 - End-to-end workflow scenarios
+- API endpoint functionality validation
+- Conversation buffer specialized testing
+- LLM provider management and switching
+- A2A protocol message handling
+- MCP protocol tool execution
+- Security authentication and authorization
+- Performance under concurrent load
 
 ### Performance Tests
 - Memory usage under load
 - Response time benchmarks
 - Concurrent operation limits
+- Buffer management efficiency
+- Context compression/decompression performance
+- Event processing throughput
 
 ### Security Tests
 - Authentication bypass attempts
 - Authorization edge cases
 - Input validation vulnerabilities
+- Password handling security
+- Session management security
+- Data encryption validation
 
 ## Implementation Phases
 
